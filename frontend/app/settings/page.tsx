@@ -1,75 +1,173 @@
 "use client"
 
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import PageToolbar from '../../components/PageToolbar'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+
 export default function SettingsPage() {
+  const [me, setMe] = useState<{ id: number; username: string; display_name?: string } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Forms
+  const [newDisplayName, setNewDisplayName] = useState('')
+  const [newUsername, setNewUsername] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    async function loadMe() {
+      setLoading(true)
+      setError(null)
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
+        if (!token) {
+          setError('Please sign in to manage your account.')
+          setLoading(false)
+          return
+        }
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+        const data = await res.json()
+        if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed to load account')
+        const u = data.user as { id: number; username: string; display_name?: string }
+        setMe(u)
+        setNewDisplayName(u.display_name || u.username)
+        setNewUsername(u.username)
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load account')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMe()
+  }, [])
+
+  async function saveDisplayName() {
+    if (!newDisplayName.trim()) return
+    setSaving(true)
+    try {
+      const token = localStorage.getItem('jobmatch:token')
+      const res = await fetch(`${API_BASE}/auth/display-name`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ display_name: newDisplayName.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed')
+      localStorage.setItem('jobmatch:display_name', newDisplayName.trim())
+      setMe(me ? { ...me, display_name: newDisplayName.trim() } : me)
+      alert('Display name updated')
+    } catch (e: any) {
+      alert(e?.message || 'Failed to update')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function saveUsername() {
+    if (!newUsername.trim() || newUsername.trim().length < 3) { alert('Username too short'); return }
+    setSaving(true)
+    try {
+      const token = localStorage.getItem('jobmatch:token')
+      const res = await fetch(`${API_BASE}/auth/change-username`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username: newUsername.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed')
+      localStorage.setItem('jobmatch:token', data.token)
+      setMe(me ? { ...me, username: newUsername.trim(), display_name: data.user?.display_name || newUsername.trim() } : me)
+      alert('Username updated')
+    } catch (e: any) {
+      alert(e?.message || 'Failed to update')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function changePassword() {
+    if (!currentPassword || !newPassword || newPassword.length < 6) { alert('Invalid password'); return }
+    setSaving(true)
+    try {
+      const token = localStorage.getItem('jobmatch:token')
+      const res = await fetch(`${API_BASE}/auth/change-password`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed')
+      setCurrentPassword(''); setNewPassword('')
+      alert('Password updated')
+    } catch (e: any) {
+      alert(e?.message || 'Failed to update')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="min-h-screen">
-      {/* Main */}
       <main className="min-h-screen">
         <PageToolbar title="Settings" placeholder="Search settings..." />
-        <div className="max-w-[1600px] mx-auto p-container-padding">
-          <div className="mb-section-gap">
+        <div className="max-w-[1200px] mx-auto p-container-padding">
+          <div className="mb-6">
             <h1 className="text-display-lg text-primary mb-1">Account Settings</h1>
-            <p className="text-on-surface-variant">Manage your profile, preferences, and integrations.</p>
+            <p className="text-on-surface-variant">Update your username, display name, and password.</p>
           </div>
 
-          <div className="grid grid-cols-12 gap-8">
-            {/* Profile Card */}
-            <section className="col-span-12 lg:col-span-4 bg-white rounded-lg border border-outline-variant p-card-padding">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <div className="w-24 h-24 rounded-full bg-surface-container" />
-                  <button className="absolute bottom-0 right-0 bg-primary text-on-primary p-1.5 rounded-full border-2 border-white">
-                    <span className="material-symbols-outlined text-[16px]">edit</span>
-                  </button>
+          {loading ? (
+            <div className="text-sm text-on-surface-variant">Loading…</div>
+          ) : error ? (
+            <div className="text-error text-sm">{error}</div>
+          ) : me ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Profile */}
+              <section className="bg-white rounded-xl border border-outline-variant p-card-padding flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-primary/10 border border-outline-variant flex items-center justify-center mb-3">
+                  <span className="text-primary text-[18px] font-bold">{(me.display_name || me.username).split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
                 </div>
-                <h2 className="text-headline-md">Your Name</h2>
-                <p className="text-on-surface-variant text-sm mb-4">you@example.com</p>
-                <span className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[12px] font-bold">STANDARD</span>
-              </div>
-            </section>
+                <h2 className="text-headline-sm">{me.display_name || me.username}</h2>
+                <p className="text-on-surface-variant text-sm">Username: <span className="font-mono">{me.username}</span></p>
+              </section>
 
-            {/* Right Column Sections */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-8">
-              <section className="bg-white rounded-lg border border-outline-variant overflow-hidden">
-                <div className="p-card-padding border-b border-outline-variant">
-                  <h3 className="text-title-sm font-semibold">General Preferences</h3>
-                </div>
-                <div className="p-card-padding space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Auto-Refresh Analytics</p>
-                      <p className="text-sm text-on-surface-variant">Refresh every 5 minutes.</p>
-                    </div>
-                    <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary">
-                      <span className="inline-block h-4 w-4 rounded-full bg-white translate-x-6" />
-                    </button>
-                  </div>
-                  <hr className="border-outline-variant" />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Email Notifications</p>
-                      <p className="text-sm text-on-surface-variant">Weekly summary</p>
-                    </div>
-                    <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-surface-container-highest">
-                      <span className="inline-block h-4 w-4 rounded-full bg-white translate-x-1" />
-                    </button>
-                  </div>
+              {/* Update Display Name */}
+              <section className="bg-white rounded-xl border border-outline-variant p-card-padding lg:col-span-2">
+                <h3 className="text-title-sm font-semibold mb-3">Display Name</h3>
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                  <input value={newDisplayName} onChange={(e)=>setNewDisplayName(e.target.value)} className="flex-1 p-2 border border-outline-variant rounded-lg text-sm" />
+                  <button onClick={saveDisplayName} disabled={saving} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold disabled:opacity-50">Save</button>
                 </div>
               </section>
 
-              <section className="bg-error/5 border border-error-container rounded-lg p-card-padding">
-                <h3 className="text-title-sm text-error mb-1">Danger Zone</h3>
-                <p className="text-sm text-on-surface-variant mb-6">Irreversible actions.</p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="px-4 py-2 border border-error text-error rounded-lg text-sm font-bold hover:bg-error/5">Clear Cache</button>
-                  <button className="px-4 py-2 bg-error text-on-error rounded-lg text-sm font-bold hover:opacity-90">Delete Account</button>
+              {/* Update Username */}
+              <section className="bg-white rounded-xl border border-outline-variant p-card-padding lg:col-span-2">
+                <h3 className="text-title-sm font-semibold mb-3">Change Username</h3>
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                  <input value={newUsername} onChange={(e)=>setNewUsername(e.target.value)} className="flex-1 p-2 border border-outline-variant rounded-lg text-sm" />
+                  <button onClick={saveUsername} disabled={saving} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold disabled:opacity-50">Update</button>
+                </div>
+              </section>
+
+              {/* Change Password */}
+              <section className="bg-white rounded-xl border border-outline-variant p-card-padding lg:col-span-2">
+                <h3 className="text-title-sm font-semibold mb-3">Change Password</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Current Password</label>
+                    <input type="password" value={currentPassword} onChange={(e)=>setCurrentPassword(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] text-on-surface-variant uppercase font-semibold">New Password</label>
+                    <input type="password" value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <button onClick={changePassword} disabled={saving} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold disabled:opacity-50">Change Password</button>
                 </div>
               </section>
             </div>
-          </div>
+          ) : null}
         </div>
       </main>
     </div>
