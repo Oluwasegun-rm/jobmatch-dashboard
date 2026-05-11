@@ -2,6 +2,10 @@ PY := python3
 PIP := $(PY) -m pip
 PYTEST := $(PY) -m pytest
 VENV ?= .venv
+# Detect host arch (arm64 on Apple Silicon)
+HOST_ARCH := $(shell uname -m)
+# Prefer Homebrew arm64 Python on Apple Silicon if present
+PYPATH := $(shell if [ -x /opt/homebrew/bin/python3 ]; then echo /opt/homebrew/bin/python3; else echo python3; fi)
 
 .PHONY: install backend-install backend-run frontend-install frontend-dev dev test lint format clean frontend
 
@@ -12,7 +16,20 @@ backend-setup:
 		echo "uv is required. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
 		exit 1; \
 	fi
-	uv venv $(VENV)
+	@# If an existing venv is a different arch than host, recreate it
+	@if [ -d "$(VENV)" ]; then \
+		if [ -x "$(VENV)/bin/python" ]; then \
+			VENV_ARCH=`"$(VENV)/bin/python" -c 'import platform; print(platform.machine())' 2>/dev/null || echo unknown`; \
+		else \
+			VENV_ARCH=unknown; \
+		fi; \
+		if [ "$$VENV_ARCH" != "$(HOST_ARCH)" ]; then \
+			echo "[backend] Recreating venv for arch $(HOST_ARCH) (was $$VENV_ARCH)"; \
+			rm -rf "$(VENV)"; \
+		fi; \
+	fi
+	uv venv -p "$(PYPATH)" "$(VENV)"
+	@"$(VENV)/bin/python" -c 'import platform, sys; print("[backend] venv:", platform.machine(), sys.executable)'
 
 backend-install: backend-setup
 	uv pip install --python $(VENV)/bin/python -r backend/requirements.txt
