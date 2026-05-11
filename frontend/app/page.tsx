@@ -29,7 +29,7 @@ function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       localStorage.setItem('jobmatch:token', token)
       localStorage.setItem('jobmatch:display_name', dn || username)
       onClose()
-      window.location.reload()
+      window.location.href = '/analysis'
     } catch (e: any) {
       setError(e?.message || 'Failed')
     } finally {
@@ -74,15 +74,22 @@ function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 export default function LandingPage() {
   const [authOpen, setAuthOpen] = useState(false)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('signin') === '1') setAuthOpen(true)
+      const openHandler = () => setAuthOpen(true)
+      window.addEventListener('jobmatch:open-auth', openHandler as any)
+      return () => window.removeEventListener('jobmatch:open-auth', openHandler as any)
+    } catch {}
+  }, [])
   return (
     <div className="min-h-screen bg-background text-on-surface">
       <main className="max-w-[1600px] mx-auto px-gutter md:px-container-padding">
         {/* Hero */}
         <section className="py-section-gap flex flex-col md:flex-row items-center gap-12 min-h-[600px]">
           <div className="flex-1 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full">
-              <span className="uppercase text-[12px] font-bold">Enterprise Tier Available</span>
-            </div>
+            {/* Removed enterprise tier badge for cleaner hero */}
             <h1 className="text-[48px] md:text-[64px] leading-tight text-primary font-extrabold tracking-tighter">JobMatch AI Dashboard</h1>
             <p className="text-title-sm text-on-surface-variant max-w-xl">
               Keyword-powered resume and job analysis that highlights matched and missing skills, with a clean, transparent scoring model.
