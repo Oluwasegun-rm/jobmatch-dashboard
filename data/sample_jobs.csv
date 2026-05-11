@@ -1,0 +1,4 @@
+id,title,company,description
+1,Data Analyst,ExampleCorp,"Seeking a Data Analyst with strong Python, SQL, and data visualization skills. Experience with Pandas, Matplotlib or Seaborn is preferred."
+2,Machine Learning Engineer,FictionalAI,"Looking for an ML Engineer skilled in Python, Machine Learning, Scikit-learn or TensorFlow, and cloud (AWS or GCP)."
+3,Analytics Engineer,DataWorks,"Role requires SQL, Python, dbt, and knowledge of BI tools like Tableau or Power BI. Docker and Git experience a plus."

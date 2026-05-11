@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JobMatch AI - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#ffffff",
+                    "surface-bright": "#fcf8fa",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#dce2f7",
+                    "primary": "#000000",
+                    "on-tertiary-fixed-variant": "#55442d",
+                    "tertiary-fixed-dim": "#dcc2a4",
+                    "inverse-on-surface": "#f3f0f1",
+                    "primary-fixed-dim": "#c0c6db",
+                    "surface-container": "#f0edee",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e5e2e3",
+                    "tertiary-container": "#261906",
+                    "surface-container-high": "#eae7e9",
+                    "background": "#fcf8fa",
+                    "on-tertiary-fixed": "#261906",
+                    "on-secondary-fixed": "#151c27",
+                    "inverse-primary": "#c0c6db",
+                    "on-background": "#1b1b1d",
+                    "surface-dim": "#dcd9db",
+                    "tertiary-fixed": "#f9debf",
+                    "outline": "#76777d",
+                    "on-tertiary-container": "#968065",
+                    "on-surface": "#1b1b1d",
+                    "secondary": "#585f6c",
+                    "on-primary-container": "#7d8497",
+                    "on-secondary-fixed-variant": "#404754",
+                    "surface-container-low": "#f6f3f4",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#dce2f3",
+                    "secondary-fixed-dim": "#c0c7d6",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#45464c",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#dce2f3",
+                    "surface": "#fcf8fa",
+                    "surface-tint": "#575e70",
+                    "on-primary-fixed": "#141b2b",
+                    "surface-container-highest": "#e5e2e3",
+                    "outline-variant": "#c6c6cd",
+                    "primary-container": "#141b2b",
+                    "on-secondary-container": "#5e6572",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed-variant": "#404758",
+                    "inverse-surface": "#303031",
+                    "tertiary": "#000000",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "card-padding": "20px",
+                    "section-gap": "48px",
+                    "unit": "4px",
+                    "container-padding": "32px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "title-sm": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "body-base": ["Inter"],
+                    "mono-data": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "title-sm": ["18px", {"lineHeight": "28px", "fontWeight": "500"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "mono-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #F9FAFB;
+        }
+        .custom-card-shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="font-body-base text-on-surface">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed h-screen w-[240px] left-0 top-0 bg-surface dark:bg-inverse-surface border-r border-outline-variant dark:border-outline shadow-sm dark:shadow-none flex flex-col h-full p-4 gap-2">
+<div class="flex items-center gap-3 px-2 py-4 mb-4">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+</div>
+<div>
+<h1 class="text-title-sm font-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">JobMatch AI</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-70">Enterprise Tier</p>
+</div>
+</div>
+<button class="mb-6 w-full py-2.5 px-4 bg-primary text-on-primary rounded-lg font-medium flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>New Analysis</span>
+</button>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant font-body-base text-body-base font-medium hover:bg-surface-container-low dark:hover:bg-secondary-container transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant font-body-base text-body-base font-medium hover:bg-surface-container-low dark:hover:bg-secondary-container transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant font-body-base text-body-base font-medium hover:bg-surface-container-low dark:hover:bg-secondary-container transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-container-high dark:bg-on-secondary-fixed-variant text-primary dark:text-inverse-on-surface rounded-lg font-semibold transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-2">
+<div class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-low">
+<img alt="User Avatar" class="w-8 h-8 rounded-full object-cover" data-alt="A professional portrait of a modern office worker in a clean, minimalist studio setting. The lighting is soft and natural, emphasizing a bright, high-key aesthetic suitable for an enterprise dashboard. The background is a neutral gray, and the subject wears a simple, dark-colored professional garment, maintaining a serious yet approachable mood that fits a high-performance SaaS environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCmHyNwd_xMdB8eOHJRJPu3ByyscRtdYsayu2TDOWzbR1MZFSjv4H8A0Qiay4PBRW9yk6FomHO9qCn8Yg2wud8p51KefGPnRgL9FsL-fT1TsOIj2jnC8gxfmU5woE7Ezoa4KF99iJ_gLmi5VEvd-cARvd2Dh8mm-zFH6Xx2uwbuKtr23V10vw_U6-wePwThxvqb3o1BJxuaoLoR5FEuP6aq-xJwSIIdwjFobvf8cwRPp-7tEeQdxDEnX0c6uTyTH2xC640UNNTGSY"/>
+<div class="overflow-hidden">
+<p class="text-body-sm font-bold truncate">Alex Rivera</p>
+<p class="text-[11px] text-on-surface-variant truncate">Admin Access</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Authority: JSON) -->
+<header class="fixed top-0 right-0 w-[calc(100%-240px)] z-40 bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline h-16 flex justify-between items-center px-gutter max-w-[1600px] ml-auto">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-1.5 text-body-sm focus:outline-none focus:border-primary transition-all" placeholder="Search settings..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3">
+<p class="font-label-caps text-on-surface-variant">Profile</p>
+<img alt="User avatar" class="w-8 h-8 rounded-full object-cover" data-alt="A clean, high-resolution headshot of a professional user with a neutral, confident expression. The photograph is taken in a well-lit environment with soft, diffused shadows to match a minimalist enterprise UI. The color palette is composed of natural skin tones against a soft white background, ensuring the avatar looks professional and integrated into the software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw2G8N1CtO8tAp-IKecbdM_HS5XN4ENIGTajBu7kExXHlWnXjgGjtYxxRDmbvpVG24pahBfUVwgHplrGO4ogsH1DmxOeteufIInK4OaGxZKYAchny4O9sq8ofvp5kOfZOfci3hn-LmvO2s1AKZbkg_o0p9iK7aU9da4EaZ-1jiffssKQxirH0u2l1M0KVD72RFJui4uQxi7CjzoUEWlkNSV5koyZsnXS4LG86_YmXAqBclblL37dbwy130cZDpE17g3MkFSKM8KuM"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[240px] pt-16 min-h-screen">
+<div class="max-w-[1600px] mx-auto p-container-padding">
+<!-- Page Header -->
+<div class="mb-section-gap">
+<h1 class="font-display-lg text-display-lg text-primary mb-1">Account Settings</h1>
+<p class="text-on-surface-variant font-body-base">Manage your profile, preferences, and API integrations.</p>
+</div>
+<!-- Dashboard Layout (Fixed-Fluid Hybrid) -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Profile Card -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+<section class="bg-white rounded-lg border border-outline-variant custom-card-shadow p-card-padding">
+<div class="flex flex-col items-center text-center">
+<div class="relative mb-4">
+<img alt="Profile" class="w-24 h-24 rounded-full object-cover border-2 border-surface-container" data-alt="A detailed portrait of a tech professional in a high-key office environment. The subject is centered, framed against a clean, modern architectural background with subtle hints of glass and white steel. The lighting is crisp and clear, creating a sophisticated and intelligent atmosphere that aligns with the premium enterprise branding of JobMatch AI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANB1PLFVTXKzpV_SlGApyg11WF3ymbf-q4MpIdE2F_wb-GROFfTCyz9CixV0dGaqjHY-0JVOmtUSC6S-7yMO9NYgX-mU9CzMIoNV6jRepq9VdRoJ_waKMLg5PGIXo6kGpgXgtCNcwSIomQ58ylQlAhZ3pQXlHTkeKUuTRm-m4176fMfAVglshpAT6-hFFMvkgyRLrXxou2c2N5syKkqxv-oudt9mzpJJDS6GISgm2_ojNpZOa4sUXqkR6S2niGVQN3xEpzYZEkMk8"/>
+<button class="absolute bottom-0 right-0 bg-primary text-on-primary p-1.5 rounded-full border-2 border-white flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+<h2 class="font-headline-md text-headline-md">Alex Rivera</h2>
+<p class="text-on-surface-variant font-body-sm mb-4">alex.rivera@enterprise-ai.com</p>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-caps font-bold">ENTERPRISE ADMIN</span>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="text-body-sm text-on-surface-variant">Last Login</span>
+<span class="text-body-sm font-mono-data">2023-10-24 14:22</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-body-sm text-on-surface-variant">Region</span>
+<span class="text-body-sm font-mono-data">US-EAST-1</span>
+</div>
+</div>
+</section>
+<!-- Theme Toggle Section -->
+<section class="bg-white rounded-lg border border-outline-variant custom-card-shadow p-card-padding">
+<h3 class="font-title-sm text-title-sm mb-6 pb-2 border-b border-outline-variant">Appearance</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">dark_mode</span>
+<div>
+<p class="text-body-base font-medium">Dark Mode</p>
+<p class="text-[12px] text-on-surface-variant">Switch between light and dark themes.</p>
+</div>
+</div>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-surface-container-highest transition-colors">
+<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+</button>
+</div>
+</section>
+</div>
+<!-- Right Column: Settings Sections -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-8">
+<!-- API Key Settings -->
+<section class="bg-white rounded-lg border border-outline-variant custom-card-shadow overflow-hidden">
+<div class="p-card-padding border-b border-outline-variant">
+<h3 class="font-title-sm text-title-sm">API Key Settings</h3>
+<p class="text-body-sm text-on-surface-variant mt-1">Authenticate your external applications using these secure keys.</p>
+</div>
+<div class="p-card-padding space-y-6">
+<div>
+<label class="block text-label-caps text-on-surface-variant mb-2">PRODUCTION API KEY</label>
+<div class="flex gap-2">
+<div class="relative flex-1">
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2 font-mono-data text-body-sm focus:outline-none" readonly="" type="password" value="sk-live-4920-match-8821-ai-dashboard"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+<button class="px-4 py-2 border border-primary rounded-lg font-medium text-body-sm hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+                                        Copy
+                                    </button>
+</div>
+</div>
+<div class="bg-tertiary-fixed/10 border border-tertiary-fixed p-4 rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-on-tertiary-container mt-0.5">info</span>
+<div>
+<p class="text-body-sm font-bold text-on-tertiary-container">Security Tip</p>
+<p class="text-body-sm text-on-tertiary-container opacity-80">Do not share your API keys in public repositories or client-side code. Use environment variables for better security.</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low px-card-padding py-3 flex justify-end">
+<button class="text-body-sm font-bold text-primary hover:underline">Regenerate Key</button>
+</div>
+</section>
+<!-- General Preferences -->
+<section class="bg-white rounded-lg border border-outline-variant custom-card-shadow overflow-hidden">
+<div class="p-card-padding border-b border-outline-variant">
+<h3 class="font-title-sm text-title-sm">General Preferences</h3>
+<p class="text-body-sm text-on-surface-variant mt-1">Configure your dashboard experience and data visualization.</p>
+</div>
+<div class="p-card-padding">
+<div class="space-y-6">
+<!-- Pref 1 -->
+<div class="flex items-center justify-between">
+<div>
+<p class="text-body-base font-medium">Auto-Refresh Analytics</p>
+<p class="text-body-sm text-on-surface-variant">Update match scores in real-time every 5 minutes.</p>
+</div>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary transition-colors">
+<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+</button>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Pref 2 -->
+<div class="flex items-center justify-between">
+<div>
+<p class="text-body-base font-medium">Confidence Threshold</p>
+<p class="text-body-sm text-on-surface-variant">Show only matches above this AI confidence score.</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-mono-data text-body-sm">85%</span>
+<input class="accent-primary w-32" type="range"/>
+</div>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Pref 3 -->
+<div class="flex items-center justify-between">
+<div>
+<p class="text-body-base font-medium">Email Notifications</p>
+<p class="text-body-sm text-on-surface-variant">Receive weekly summary of matching performance.</p>
+</div>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary transition-colors">
+<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="bg-error-container/10 border border-error-container rounded-lg p-card-padding">
+<h3 class="font-title-sm text-title-sm text-error mb-1">Danger Zone</h3>
+<p class="text-body-sm text-on-surface-variant mb-6">Irreversible actions that affect your entire enterprise account.</p>
+<div class="flex flex-col sm:flex-row gap-4">
+<button class="px-4 py-2 border border-error text-error rounded-lg text-body-sm font-bold hover:bg-error/5 transition-colors">
+                                Clear Cache &amp; Analytics
+                            </button>
+<button class="px-4 py-2 bg-error text-on-error rounded-lg text-body-sm font-bold hover:opacity-90 transition-opacity">
+                                Delete Account
+                            </button>
+</div>
+</section>
+</div>
+</div>
+<!-- Floating Action Button Suppression - Requirement Followed -->
+<!-- No FAB on Settings/Profile as mandated by instructions -->
+</div>
+</main>
+</body></html>

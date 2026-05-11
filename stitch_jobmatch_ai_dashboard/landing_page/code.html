@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JobMatch AI Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "surface-bright": "#fcf8fa",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#dce2f7",
+                        "primary": "#000000",
+                        "on-tertiary-fixed-variant": "#55442d",
+                        "tertiary-fixed-dim": "#dcc2a4",
+                        "inverse-on-surface": "#f3f0f1",
+                        "primary-fixed-dim": "#c0c6db",
+                        "surface-container": "#f0edee",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e5e2e3",
+                        "tertiary-container": "#261906",
+                        "surface-container-high": "#eae7e9",
+                        "background": "#fcf8fa",
+                        "on-tertiary-fixed": "#261906",
+                        "on-secondary-fixed": "#151c27",
+                        "inverse-primary": "#c0c6db",
+                        "on-background": "#1b1b1d",
+                        "surface-dim": "#dcd9db",
+                        "tertiary-fixed": "#f9debf",
+                        "outline": "#76777d",
+                        "on-tertiary-container": "#968065",
+                        "on-surface": "#1b1b1d",
+                        "secondary": "#585f6c",
+                        "on-primary-container": "#7d8497",
+                        "on-secondary-fixed-variant": "#404754",
+                        "surface-container-low": "#f6f3f4",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#dce2f3",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#45464c",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#dce2f3",
+                        "surface": "#fcf8fa",
+                        "surface-tint": "#575e70",
+                        "on-primary-fixed": "#141b2b",
+                        "surface-container-highest": "#e5e2e3",
+                        "outline-variant": "#c6c6cd",
+                        "primary-container": "#141b2b",
+                        "on-secondary-container": "#5e6572",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#404758",
+                        "inverse-surface": "#303031",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "card-padding": "20px",
+                        "section-gap": "48px",
+                        "unit": "4px",
+                        "container-padding": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "title-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-base": ["Inter"],
+                        "mono-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "title-sm": ["18px", {"lineHeight": "28px", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-base": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "mono-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F9FAFB;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-card {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<nav class="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="work">work</span>
+<span class="text-title-sm font-headline-md font-bold tracking-tight text-primary">JobMatch AI</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-body-base text-primary font-bold border-b-2 border-primary py-1" href="#">Dashboard</a>
+<a class="font-body-base text-on-surface-variant hover:text-primary transition-colors" href="#">Analysis</a>
+<a class="font-body-base text-on-surface-variant hover:text-primary transition-colors" href="#">Analytics</a>
+<a class="font-body-base text-on-surface-variant hover:text-primary transition-colors" href="#">Settings</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="notifications">notifications</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyDKvOSmeiEquoFvAAQ_uCxrvI-vAeHmHVyTElCq4DwqhEBE3cqYA8Q3r4W_ZTDHknAQ6VdCZXHGLzxXvb1nwwpBKS9rKcl7TDGxpDX6Q4UexJhlAH8KgAsBuo_-thOKD0FVbAFEB4fj9w8M03oUjUcFX9i_b_MffyP5j61wZ0CC2VwUw7Pkdu1XmAMsivC8DSh-7Y1qg47o5e-U7D3wpqgQZHf101f8oUBMclhvyrkCb6FVn8ZDambC-k97bs_WdIzM4wSZcfafU"/>
+</div>
+</div>
+</nav>
+</header>
+<main class="pt-16 max-w-[1600px] mx-auto px-gutter md:px-container-padding">
+<!-- Hero Section -->
+<section class="py-section-gap flex flex-col md:flex-row items-center gap-12 min-h-[716px]">
+<div class="flex-1 space-y-6">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full">
+<span class="font-label-caps text-label-caps uppercase">Enterprise Tier Available</span>
+</div>
+<h1 class="font-display-lg text-[48px] md:text-[64px] leading-tight text-primary font-extrabold tracking-tighter">
+                    JobMatch AI Dashboard
+                </h1>
+<p class="font-body-base text-title-sm text-on-surface-variant max-w-xl">
+                    AI-powered resume and job description analysis to help you land your next role. We bridge the gap between your talent and the recruiter's requirements with surgical precision.
+                </p>
+<div class="flex flex-wrap gap-4 pt-4">
+<button class="bg-primary text-on-primary px-8 py-3 rounded-lg font-headline-md text-body-base hover:opacity-90 active:scale-[0.98] transition-all shadow-lg">
+                        Analyze Resume
+                    </button>
+<button class="bg-surface border border-outline-variant text-primary px-8 py-3 rounded-lg font-headline-md text-body-base hover:bg-surface-container-low transition-all">
+                        View Demo
+                    </button>
+</div>
+</div>
+<div class="flex-1 w-full max-w-2xl">
+<div class="tonal-card rounded-xl overflow-hidden aspect-video relative">
+<img alt="JobMatch Dashboard Preview" class="w-full h-full object-cover" data-alt="A clean and professional dashboard interface showing data analytics and AI matching scores. The aesthetic is high-end enterprise software with a light-mode color palette of soft whites and cool grays. Data visualizations including bar charts and progress rings are rendered with crisp lines and monochromatic tones. The lighting is bright and even, evoking a sense of modern efficiency and quiet intelligence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9raOvxDvXbW3rdUvpFzUy-UXTYrsdMNVkvYA8BZrp8b4ZJF6vF-JxMOK7jPv_hCSl5NLfyZZJnXVDPwjiySXF7iMG4OCqyjkYJV4B7tc1daS0w4pWntvpNm_F1VQWm84B184h1j9dlRo0cZDbpc9thp_z3jpvvBCh2MakljcDD12QC1u--wygOrNgdTMhxzehPZOKeWCtpifdHTbmixhhU6Dx3qfJVrRq1WnXbZl9q6iJA1E53RjLNRcyCn3Fz9HmuLUXjj60Wc8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"></div>
+</div>
+</div>
+</section>
+<!-- Feature Grid (Bento Layout) -->
+<section class="py-section-gap">
+<div class="mb-12">
+<h2 class="font-headline-md text-display-lg text-primary mb-2">How it works</h2>
+<p class="font-body-base text-on-surface-variant">Three steps to optimize your professional presence.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- AI Match Scoring (Primary Card) -->
+<div class="md:col-span-8 tonal-card p-card-padding rounded-xl flex flex-col justify-between group">
+<div class="space-y-4">
+<div class="h-12 w-12 rounded-lg bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="troubleshoot">troubleshoot</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">AI Match Scoring</h3>
+<p class="font-body-base text-on-surface-variant max-w-lg">
+                            Our proprietary neural networks scan your resume against specific job descriptions to provide a weighted percentage score based on industry standards and latent semantic indexing.
+                        </p>
+</div>
+<div class="mt-8 flex items-center gap-4">
+<div class="px-4 py-2 bg-surface-container-high rounded-lg border border-outline-variant">
+<span class="font-mono-data text-mono-data text-primary font-bold">MATCH: 94%</span>
+</div>
+<div class="flex-1 h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[94%]"></div>
+</div>
+</div>
+</div>
+<!-- Skill Gap Analysis -->
+<div class="md:col-span-4 tonal-card p-card-padding rounded-xl flex flex-col gap-6">
+<div class="h-12 w-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</div>
+<div class="space-y-2">
+<h3 class="font-headline-md text-headline-md text-primary">Skill Gap Analysis</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            Instantly identify missing keywords and required certifications that recruiters are looking for.
+                        </p>
+</div>
+<ul class="space-y-2 border-t border-outline-variant pt-4">
+<li class="flex items-center gap-2 font-mono-data text-mono-data text-error">
+<span class="material-symbols-outlined text-[16px]" data-icon="close">close</span> Missing: Kubernetes
+                        </li>
+<li class="flex items-center gap-2 font-mono-data text-mono-data text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]" data-icon="check">check</span> Found: Terraform
+                        </li>
+</ul>
+</div>
+<!-- Application Tracking -->
+<div class="md:col-span-4 tonal-card p-card-padding rounded-xl flex flex-col gap-6">
+<div class="h-12 w-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="pending_actions">pending_actions</span>
+</div>
+<div class="space-y-2">
+<h3 class="font-headline-md text-headline-md text-primary">Application Tracking</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            Keep track of every submission, follow-up, and interview stage in one unified data-dense view.
+                        </p>
+</div>
+</div>
+<!-- Real-time Feedback -->
+<div class="md:col-span-8 tonal-card p-card-padding rounded-xl flex flex-col md:flex-row gap-8 items-center bg-surface-bright border-dashed border-2">
+<div class="flex-1 space-y-4">
+<h3 class="font-headline-md text-headline-md text-primary">Real-time Resume Feedback</h3>
+<p class="font-body-base text-on-surface-variant">
+                            Receive instant suggestions as you edit. Our AI acts as a dedicated career coach, providing actionable insights on phrasing, formatting, and impact.
+                        </p>
+<button class="text-primary font-headline-md border-b border-primary pb-0.5 hover:opacity-70 transition-opacity">Learn more about AI Coaching</button>
+</div>
+<div class="w-full md:w-1/3">
+<div class="bg-white p-4 rounded-lg shadow-sm border border-outline-variant space-y-3">
+<div class="h-2 w-3/4 bg-surface-container rounded-full"></div>
+<div class="h-2 w-full bg-surface-container rounded-full"></div>
+<div class="p-2 bg-primary-container/10 border-l-4 border-primary rounded">
+<p class="text-[10px] font-mono-data text-primary">AI SUGGESTION: Replace "responsible for" with "Spearheaded".</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats / Trust Section -->
+<section class="py-section-gap border-t border-outline-variant">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+<div>
+<div class="font-display-lg text-[40px] text-primary font-extrabold tracking-tighter">500k+</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Resumes Analyzed</div>
+</div>
+<div>
+<div class="font-display-lg text-[40px] text-primary font-extrabold tracking-tighter">42%</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Higher Call Rates</div>
+</div>
+<div>
+<div class="font-display-lg text-[40px] text-primary font-extrabold tracking-tighter">150+</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Fortune 500 Roles</div>
+</div>
+<div>
+<div class="font-display-lg text-[40px] text-primary font-extrabold tracking-tighter">12s</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-1">Average Scan Time</div>
+</div>
+</div>
+</section>
+<!-- CTA Footer Section -->
+<section class="py-section-gap mb-16">
+<div class="bg-primary-container text-on-primary rounded-2xl p-12 text-center space-y-8 relative overflow-hidden">
+<div class="relative z-10">
+<h2 class="font-display-lg text-white mb-4">Ready to land your dream role?</h2>
+<p class="font-body-base text-on-primary-container max-w-2xl mx-auto mb-8">
+                        Join thousands of professionals using JobMatch AI to bypass the black hole of applicant tracking systems and get noticed by top hiring managers.
+                    </p>
+<button class="bg-white text-primary px-10 py-4 rounded-lg font-headline-md text-title-sm hover:bg-surface-container-low active:scale-[0.98] transition-all">
+                        Get Started for Free
+                    </button>
+</div>
+<!-- Subtle graphic element -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed-dim/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+<div class="absolute bottom-0 left-0 w-48 h-48 bg-primary-fixed-dim/5 rounded-full blur-2xl -ml-24 -mb-24"></div>
+</div>
+</section>
+</main>
+<!-- Simple Footer -->
+<footer class="bg-surface-container py-12 border-t border-outline-variant">
+<div class="max-w-[1600px] mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[24px]" data-icon="work">work</span>
+<span class="text-body-base font-bold text-primary">JobMatch AI</span>
+</div>
+<div class="flex gap-8 text-on-surface-variant font-body-sm text-body-sm">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Contact Support</a>
+</div>
+<p class="text-on-surface-variant font-body-sm text-body-sm">
+                © 2024 JobMatch AI. All rights reserved.
+            </p>
+</div>
+</footer>
+</body></html>
