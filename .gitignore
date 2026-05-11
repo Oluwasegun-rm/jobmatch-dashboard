@@ -28,3 +28,8 @@ dist/
 
 # Frontend env (use .env.local.example instead)
 frontend/.env.local
+
+# Frontend caches
+frontend/.npm-cache/
+frontend/.turbo/
+frontend/.vercel/
