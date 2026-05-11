@@ -20,15 +20,14 @@ backend-setup:
 	rm -rf "$(VENV)"
 	@# Pick a Python that matches host arch (prefer /usr/bin on macOS, then Homebrew)
 	PY_CAND=""; \
-	for C in /opt/homebrew/bin/python3 /usr/bin/python3 `command -v python3 2>/dev/null || true`; do \
-		if [ -n "$$C" ] && [ -x "$$C" ]; then \
-			# Skip CommandLineTools shim (often x86_64 or outdated)
-			EXE=`"$$C" -c 'import sys; print(sys.executable)' 2>/dev/null || echo $$C`; \
-			case "$$EXE" in *CommandLineTools*) continue ;; esac; \
-			CARCH=`"$$C" -c 'import platform; print(platform.machine())' 2>/dev/null || echo unknown`; \
-			if [ "$$CARCH" = "$(HOST_ARCH)" ]; then PY_CAND="$$C"; break; fi; \
-		fi; \
-	done; \
+    for C in /opt/homebrew/bin/python3 /usr/bin/python3 `command -v python3 2>/dev/null || true`; do \
+        if [ -n "$$C" ] && [ -x "$$C" ]; then \
+            EXE=`"$$C" -c 'import sys; print(sys.executable)' 2>/dev/null || echo $$C`; \
+            case "$$EXE" in *CommandLineTools*) continue ;; esac; \
+            CARCH=`"$$C" -c 'import platform; print(platform.machine())' 2>/dev/null || echo unknown`; \
+            if [ "$$CARCH" = "$(HOST_ARCH)" ]; then PY_CAND="$$C"; break; fi; \
+        fi; \
+    done; \
 	if [ -z "$$PY_CAND" ]; then \
 		echo "[backend] Could not find a Python matching arch $(HOST_ARCH). On Apple Silicon, run: brew install python@3.12"; \
 		exit 1; \
