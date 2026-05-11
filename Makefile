@@ -10,18 +10,18 @@ backend-install:
 	$(PIP) install -r backend/requirements.txt
 
 backend-run:
- 	@# Prefer uv if available (faster, reproducible). Falls back to system Python.
- 	@if command -v uv >/dev/null 2>&1; then \
- 		echo "[backend] Starting with uv (first run may install deps)…"; \
- 		PYTHONPATH=backend/src uv run -r backend/requirements.txt python -m uvicorn backend.app:app --reload --port 8000; \
- 	else \
- 		echo "[backend] uv not found, starting with system Python"; \
- 		PYTHONPATH=backend/src python -m uvicorn backend.app:app --reload --port 8000; \
- 	fi
+	@# Prefer uv if available (faster, reproducible). Falls back to system Python.
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "[backend] Starting with uv (first run may install deps)…"; \
+		PYTHONPATH=backend/src uv run -r backend/requirements.txt python -m uvicorn backend.app:app --reload --port 8000; \
+	else \
+		echo "[backend] uv not found, starting with system Python"; \
+		PYTHONPATH=backend/src python -m uvicorn backend.app:app --reload --port 8000; \
+	fi
 
 # Fallback if 'uv' is not installed
 backend-run-plain:
- 	PYTHONPATH=backend/src python -m uvicorn backend.app:app --reload --port 8000
+	PYTHONPATH=backend/src python -m uvicorn backend.app:app --reload --port 8000
 
 frontend-install:
 	cd frontend && npm install
