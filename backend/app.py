@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import logging
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,11 +30,30 @@ log = logging.getLogger("jobmatch.app")
 app = FastAPI(title="JobMatch AI Backend", version="0.1.0")
 
 # CORS for frontend calls
+def _parse_origins(val: str) -> list[str]:
+    items: list[str] = []
+    for raw in (val or "").split(","):
+        t = raw.strip().strip('"').strip("'")
+        if t:
+            items.append(t)
+    return items
+
 origins_env = os.getenv("ALLOWED_ORIGINS", "*")
-origins = [o.strip() for o in origins_env.split(",") if o.strip()] or ["*"]
+origin_regex_env = os.getenv("ALLOWED_ORIGIN_REGEX")
+origins = _parse_origins(origins_env)
+
+# If wildcard is configured, prefer a permissive regex to support allow_credentials
+allow_origin_regex: str | None = None
+if not origins or origins == ["*"]:
+    allow_origin_regex = origin_regex_env or ".*"
+    origins = []
+else:
+    allow_origin_regex = origin_regex_env or None
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,8 +86,8 @@ def _startup() -> None:
                 return "****"
             return f"****{s[-4:]}"
         log.info(
-            "Startup config: OPENAI_ENABLED=%s OPENAI_MODEL=%s OPENAI_API_KEY=%s DB_PATH=%s ALLOWED_ORIGINS=%s",
-            bool(cfg.openai_enabled), cfg.openai_model, _mask(cfg.openai_api_key), cfg.db_path, origins_env,
+            "Startup config: OPENAI_ENABLED=%s OPENAI_MODEL=%s OPENAI_API_KEY=%s DB_PATH=%s ALLOWED_ORIGINS=%s ORIGIN_REGEX=%s",
+            bool(cfg.openai_enabled), cfg.openai_model, _mask(cfg.openai_api_key), cfg.db_path, ",".join(origins) or "* (regex)", allow_origin_regex or "<none>",
         )
     except Exception as e:
         log.warning("Failed to log startup config: %s", type(e).__name__)
