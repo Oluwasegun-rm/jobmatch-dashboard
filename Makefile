@@ -28,7 +28,20 @@ backend-setup:
 			rm -rf "$(VENV)"; \
 		fi; \
 	fi
-	uv venv -p "$(PYPATH)" "$(VENV)"
+	@# Pick a Python that matches host arch (prefer /usr/bin on macOS, then Homebrew)
+	PY_CAND=""; \
+	for C in /usr/bin/python3 /opt/homebrew/bin/python3 `command -v python3 2>/dev/null || true`; do \
+		if [ -n "$$C" ] && [ -x "$$C" ]; then \
+			CARCH=`"$$C" -c 'import platform; print(platform.machine())' 2>/dev/null || echo unknown`; \
+			if [ "$$CARCH" = "$(HOST_ARCH)" ]; then PY_CAND="$$C"; break; fi; \
+		fi; \
+	done; \
+	if [ -z "$$PY_CAND" ]; then \
+		echo "[backend] Could not find a Python matching arch $(HOST_ARCH). On Apple Silicon, run: brew install python@3.12"; \
+		exit 1; \
+	fi; \
+	echo "[backend] Using python: $$PY_CAND"; \
+	uv venv -p "$$PY_CAND" "$(VENV)"
 	@"$(VENV)/bin/python" -c 'import platform, sys; print("[backend] venv:", platform.machine(), sys.executable)'
 
 backend-install: backend-setup
