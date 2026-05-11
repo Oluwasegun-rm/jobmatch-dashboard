@@ -408,7 +408,14 @@ def auth_me(authorization: str | None = Header(default=None)) -> Dict[str, Any]:
     p = decode_token(tok)
     if not p:
         raise HTTPException(status_code=401, detail="invalid token")
-    return {"ok": True, "user": {"id": p.get("sub"), "username": p.get("usr"), "display_name": p.get("name")}}
+    try:
+        uid = int(p.get("sub"))
+    except Exception:
+        raise HTTPException(status_code=401, detail="invalid token")
+    user = get_user_by_id(uid)
+    if not user:
+        raise HTTPException(status_code=404, detail="user not found")
+    return {"ok": True, "user": {"id": user["id"], "username": user["username"], "display_name": user.get("display_name") or user["username"]}}
 
 
 class DisplayNameRequest(BaseModel):

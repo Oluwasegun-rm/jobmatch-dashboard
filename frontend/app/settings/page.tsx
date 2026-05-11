@@ -56,6 +56,7 @@ export default function SettingsPage() {
       const data = await res.json()
       if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed')
       localStorage.setItem('jobmatch:display_name', newDisplayName.trim())
+      window.dispatchEvent(new CustomEvent('jobmatch:user-updated'))
       setMe(me ? { ...me, display_name: newDisplayName.trim() } : me)
       alert('Display name updated')
     } catch (e: any) {
@@ -77,6 +78,8 @@ export default function SettingsPage() {
       const data = await res.json()
       if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed')
       localStorage.setItem('jobmatch:token', data.token)
+      localStorage.setItem('jobmatch:display_name', data.user?.display_name || newUsername.trim())
+      window.dispatchEvent(new CustomEvent('jobmatch:user-updated'))
       setMe(me ? { ...me, username: newUsername.trim(), display_name: data.user?.display_name || newUsername.trim() } : me)
       alert('Username updated')
     } catch (e: any) {
