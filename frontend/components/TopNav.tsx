@@ -15,11 +15,38 @@ const links = [
 export default function TopNav() {
   const pathname = usePathname() || "/"
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
   useEffect(() => {
     try {
       const dn = localStorage.getItem('jobmatch:display_name')
       setDisplayName(dn)
     } catch {}
+    const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
+    async function loadMe() {
+      try {
+        if (!token) return
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+        const data = await res.json()
+        if (res.ok && data?.ok) {
+          const dn = (data.user?.display_name as string) || (data.user?.username as string)
+          setDisplayName(dn)
+          localStorage.setItem('jobmatch:display_name', dn)
+        }
+      } catch {}
+    }
+    loadMe()
+    function handleChange() {
+      try {
+        const dn = localStorage.getItem('jobmatch:display_name')
+        setDisplayName(dn)
+      } catch {}
+    }
+    window.addEventListener('storage', handleChange)
+    window.addEventListener('jobmatch:user-updated', handleChange as any)
+    return () => {
+      window.removeEventListener('storage', handleChange)
+      window.removeEventListener('jobmatch:user-updated', handleChange as any)
+    }
   }, [])
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">

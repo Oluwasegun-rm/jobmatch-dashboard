@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import logging
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 from typing import Any, Dict
 
 from jobmatch.analyzer import analyze
-from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name
+from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash
 from jobmatch.providers import remotive_client
 from jobmatch.providers.models import JobItem
 from pypdf import PdfReader
@@ -29,11 +30,30 @@ log = logging.getLogger("jobmatch.app")
 app = FastAPI(title="JobMatch AI Backend", version="0.1.0")
 
 # CORS for frontend calls
+def _parse_origins(val: str) -> list[str]:
+    items: list[str] = []
+    for raw in (val or "").split(","):
+        t = raw.strip().strip('"').strip("'")
+        if t:
+            items.append(t)
+    return items
+
 origins_env = os.getenv("ALLOWED_ORIGINS", "*")
-origins = [o.strip() for o in origins_env.split(",") if o.strip()] or ["*"]
+origin_regex_env = os.getenv("ALLOWED_ORIGIN_REGEX")
+origins = _parse_origins(origins_env)
+
+# If wildcard is configured, prefer a permissive regex to support allow_credentials
+allow_origin_regex: str | None = None
+if not origins or origins == ["*"]:
+    allow_origin_regex = origin_regex_env or ".*"
+    origins = []
+else:
+    allow_origin_regex = origin_regex_env or None
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,8 +86,8 @@ def _startup() -> None:
                 return "****"
             return f"****{s[-4:]}"
         log.info(
-            "Startup config: OPENAI_ENABLED=%s OPENAI_MODEL=%s OPENAI_API_KEY=%s DB_PATH=%s ALLOWED_ORIGINS=%s",
-            bool(cfg.openai_enabled), cfg.openai_model, _mask(cfg.openai_api_key), cfg.db_path, origins_env,
+            "Startup config: OPENAI_ENABLED=%s OPENAI_MODEL=%s OPENAI_API_KEY=%s DB_PATH=%s ALLOWED_ORIGINS=%s ORIGIN_REGEX=%s",
+            bool(cfg.openai_enabled), cfg.openai_model, _mask(cfg.openai_api_key), cfg.db_path, ",".join(origins) or "* (regex)", allow_origin_regex or "<none>",
         )
     except Exception as e:
         log.warning("Failed to log startup config: %s", type(e).__name__)
@@ -408,7 +428,14 @@ def auth_me(authorization: str | None = Header(default=None)) -> Dict[str, Any]:
     p = decode_token(tok)
     if not p:
         raise HTTPException(status_code=401, detail="invalid token")
-    return {"ok": True, "user": {"id": p.get("sub"), "username": p.get("usr"), "display_name": p.get("name")}}
+    try:
+        uid = int(p.get("sub"))
+    except Exception:
+        raise HTTPException(status_code=401, detail="invalid token")
+    user = get_user_by_id(uid)
+    if not user:
+        raise HTTPException(status_code=404, detail="user not found")
+    return {"ok": True, "user": {"id": user["id"], "username": user["username"], "display_name": user.get("display_name") or user["username"]}}
 
 
 class DisplayNameRequest(BaseModel):
@@ -423,4 +450,53 @@ def auth_display_name(req: DisplayNameRequest, authorization: str | None = Heade
         raise HTTPException(status_code=401, detail="invalid token")
     uid = int(p.get("sub"))
     update_display_name(uid, req.display_name)
+    return {"ok": True}
+
+
+class ChangeUsernameRequest(BaseModel):
+    username: str
+
+
+@app.post("/auth/change-username")
+def auth_change_username(req: ChangeUsernameRequest, authorization: str | None = Header(default=None)) -> Dict[str, Any]:
+    tok = extract_bearer_token(authorization)
+    p = decode_token(tok or "")
+    if not p:
+        raise HTTPException(status_code=401, detail="invalid token")
+    uid = int(p.get("sub"))
+    if not req.username or len(req.username.strip()) < 3:
+        raise HTTPException(status_code=400, detail="invalid username")
+    # Check if taken
+    existing = get_user_by_username(req.username.strip())
+    if existing and int(existing["id"]) != uid:
+        raise HTTPException(status_code=409, detail="username is taken")
+    try:
+        update_username(uid, req.username.strip())
+    except Exception:
+        raise HTTPException(status_code=409, detail="username is taken")
+    # Issue a refreshed token with updated username
+    me = get_user_by_id(uid)
+    token = create_token(uid, req.username.strip(), (me.get("display_name") if me else None) or req.username.strip())
+    return {"ok": True, "token": token, "user": {"id": uid, "username": req.username.strip(), "display_name": (me.get("display_name") if me else None) or req.username.strip()}}
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@app.post("/auth/change-password")
+def auth_change_password(req: ChangePasswordRequest, authorization: str | None = Header(default=None)) -> Dict[str, Any]:
+    tok = extract_bearer_token(authorization)
+    p = decode_token(tok or "")
+    if not p:
+        raise HTTPException(status_code=401, detail="invalid token")
+    uid = int(p.get("sub"))
+    u = get_user_by_id(uid)
+    if not u or not verify_password(req.current_password or "", u["password_hash"]):
+        raise HTTPException(status_code=401, detail="invalid current password")
+    if not req.new_password or len(req.new_password) < 6:
+        raise HTTPException(status_code=400, detail="new password too short")
+    ph = hash_password(req.new_password)
+    update_password_hash(uid, ph)
     return {"ok": True}

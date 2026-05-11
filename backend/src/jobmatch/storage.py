@@ -5,6 +5,7 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime
 from typing import Any, Dict, List
+import sqlite3
 
 from .config import load_config
 
@@ -269,6 +270,30 @@ def update_display_name(user_id: int, display_name: str, db_path: str | None = N
     with closing(_connect(path)) as conn:
         cur = conn.cursor()
         cur.execute("UPDATE users SET display_name = ? WHERE id = ?", (display_name, int(user_id)))
+        conn.commit()
+
+
+def update_username(user_id: int, new_username: str, db_path: str | None = None) -> None:
+    cfg = load_config()
+    path = db_path or cfg.db_path
+    init_db(path)
+    with closing(_connect(path)) as conn:
+        cur = conn.cursor()
+        try:
+            cur.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, int(user_id)))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            # Unique constraint violation
+            raise
+
+
+def update_password_hash(user_id: int, password_hash: str, db_path: str | None = None) -> None:
+    cfg = load_config()
+    path = db_path or cfg.db_path
+    init_db(path)
+    with closing(_connect(path)) as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, int(user_id)))
         conn.commit()
 
 
