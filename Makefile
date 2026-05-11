@@ -16,22 +16,15 @@ backend-setup:
 		echo "uv is required. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
 		exit 1; \
 	fi
-	@# If an existing venv is a different arch than host, recreate it
-	@if [ -d "$(VENV)" ]; then \
-		if [ -x "$(VENV)/bin/python" ]; then \
-			VENV_ARCH=`"$(VENV)/bin/python" -c 'import platform; print(platform.machine())' 2>/dev/null || echo unknown`; \
-		else \
-			VENV_ARCH=unknown; \
-		fi; \
-		if [ "$$VENV_ARCH" != "$(HOST_ARCH)" ]; then \
-			echo "[backend] Recreating venv for arch $(HOST_ARCH) (was $$VENV_ARCH)"; \
-			rm -rf "$(VENV)"; \
-		fi; \
-	fi
+	@# Always recreate venv to avoid stale/mismatched wheels
+	rm -rf "$(VENV)"
 	@# Pick a Python that matches host arch (prefer /usr/bin on macOS, then Homebrew)
 	PY_CAND=""; \
-	for C in /usr/bin/python3 /opt/homebrew/bin/python3 `command -v python3 2>/dev/null || true`; do \
+	for C in /opt/homebrew/bin/python3 /usr/bin/python3 `command -v python3 2>/dev/null || true`; do \
 		if [ -n "$$C" ] && [ -x "$$C" ]; then \
+			# Skip CommandLineTools shim (often x86_64 or outdated)
+			EXE=`"$$C" -c 'import sys; print(sys.executable)' 2>/dev/null || echo $$C`; \
+			case "$$EXE" in *CommandLineTools*) continue ;; esac; \
 			CARCH=`"$$C" -c 'import platform; print(platform.machine())' 2>/dev/null || echo unknown`; \
 			if [ "$$CARCH" = "$(HOST_ARCH)" ]; then PY_CAND="$$C"; break; fi; \
 		fi; \
