@@ -1,27 +1,28 @@
 PY := python3
 PIP := $(PY) -m pip
 PYTEST := $(PY) -m pytest
+VENV ?= .venv
 
 .PHONY: install backend-install backend-run frontend-install frontend-dev dev test lint format clean frontend
 
 install: backend-install
 
-backend-install:
-	$(PIP) install -r backend/requirements.txt
-
-backend-run:
-	@# Prefer uv if available (faster, reproducible). Falls back to system Python.
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "[backend] Starting with uv (first run may install deps)…"; \
-		PYTHONPATH=backend/src uv run -r backend/requirements.txt python -m uvicorn backend.app:app --reload --port 8000; \
-	else \
-		echo "[backend] uv not found, starting with system Python"; \
-		PYTHONPATH=backend/src python -m uvicorn backend.app:app --reload --port 8000; \
+backend-setup:
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "uv is required. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+		exit 1; \
 	fi
+	uv venv $(VENV)
 
-# Fallback if 'uv' is not installed
+backend-install: backend-setup
+	uv pip install --python $(VENV)/bin/python -r backend/requirements.txt
+
+backend-run: backend-install
+	PYTHONPATH=backend/src $(VENV)/bin/python -m uvicorn backend.app:app --reload --port 8000
+
+# Alias
 backend-run-plain:
-	PYTHONPATH=backend/src python -m uvicorn backend.app:app --reload --port 8000
+	$(MAKE) backend-run
 
 frontend-install:
 	cd frontend && npm install
@@ -29,10 +30,10 @@ frontend-install:
 frontend-dev:
 	cd frontend && npm run dev
 
-dev: backend-install backend-run
+dev: backend-run
 
-test:
-	OPENAI_ENABLED=0 PYTHONPATH=backend/src $(PYTEST) -q backend/tests
+test: backend-install
+	OPENAI_ENABLED=0 PYTHONPATH=backend/src $(VENV)/bin/python -m pytest -q backend/tests
 
 lint:
 	ruff check backend
