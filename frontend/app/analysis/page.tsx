@@ -13,6 +13,7 @@ type AnalyzeResponse = {
     resume_skills: string[]
     job_skills: string[]
     suggestions: string[]
+    narrative: string
   }
 }
 
@@ -40,9 +41,20 @@ export default function AnalysisPage() {
 
   const canAnalyze = useMemo(() => resume.trim().length > 0 && job.trim().length > 0, [resume, job])
 
+  function htmlToText(html: string): string {
+    try {
+      const el = document.createElement('div')
+      el.innerHTML = html
+      return (el.textContent || el.innerText || '').trim()
+    } catch {
+      return html.replace(/<[^>]+>/g, '').trim()
+    }
+  }
+
   async function fetchHistory() {
     try {
-      const res = await fetch(`${API_BASE}/recent`)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
+      const res = await fetch(`${API_BASE}/recent`, { headers: token ? { 'Authorization': `Bearer ${token}` } : undefined })
       const data = await res.json()
       if (data?.ok) setHistory(data.results)
     } catch {}
@@ -57,15 +69,16 @@ export default function AnalysisPage() {
       if (typeof window === 'undefined') return
       const storedDesc = localStorage.getItem('jobmatch:selected_job_description')
       const storedMeta = localStorage.getItem('jobmatch:selected_job_meta')
-      if (storedDesc && !job.trim()) setJob(storedDesc)
+      if (storedDesc && !job.trim()) setJob(htmlToText(storedDesc))
       if (storedMeta) setJobMeta(JSON.parse(storedMeta))
     } catch {}
   }, [])
 
   async function computeAnalysis(r: string, j: string) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
     const res = await fetch(`${API_BASE}/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
       body: JSON.stringify({ resume_text: r, job_text: j }),
     })
     const data: AnalyzeResponse = await res.json()
@@ -85,9 +98,10 @@ export default function AnalysisPage() {
       const analyzed = await computeAnalysis(resume, job)
       // Auto-save the analysis after successful analyze
       try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
         const saveRes = await fetch(`${API_BASE}/save`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
           body: JSON.stringify({
             resume_text: resume,
             job_text: job,
@@ -120,7 +134,7 @@ export default function AnalysisPage() {
       const data = await res.json()
       if (!data?.ok) throw new Error('Failed to load analysis')
       const r = String(data.result.resume_text || '')
-      const j = String(data.result.job_text || '')
+      const j = htmlToText(String(data.result.job_text || ''))
       setResume(r)
       setJob(j)
       setJobMeta({
@@ -141,9 +155,10 @@ export default function AnalysisPage() {
   async function onSave() {
     if (!result) return
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
       const res = await fetch(`${API_BASE}/save`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           resume_text: resume,
           job_text: job,
@@ -329,6 +344,12 @@ export default function AnalysisPage() {
                     </div>
                   </div>
                 </div>
+                {/* Analysis Summary */}
+                <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+                  <span className="text-[12px] text-on-surface-variant uppercase font-bold">Analysis Summary</span>
+                  <p className="mt-2 text-sm text-on-surface-variant whitespace-pre-wrap">{result.narrative || 'This resume shows partial alignment with the role based on explicit skill overlap.'}</p>
+                </div>
+
                 {/* Suggestions */}
                 <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Suggestions</span>
@@ -381,32 +402,35 @@ export default function AnalysisPage() {
                                 e.stopPropagation();
                                 setLoading(true)
                                 try {
-                                setPrevResume(resume)
-                                setPrevJob(job)
-                                  await loadAnalysisById(h.id)
-                                  const analyzed = await computeAnalysis(resume, job)
+                                  // Load the original analysis payload directly to avoid state timing issues
+                                  const res = await fetch(`${API_BASE}/analysis/${h.id}`)
+                                  const data = await res.json()
+                                  if (!data?.ok) throw new Error('Failed to load analysis')
+                                  const r = String(data.result.resume_text || '')
+                                  const j = String(data.result.job_text || '')
+                                  const analyzed = await computeAnalysis(r, j)
                                   const saveRes = await fetch(`${API_BASE}/save`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    resume_text: resume,
-                                    job_text: job,
-                                    score: analyzed.score,
-                                    matched_skills: analyzed.matched_skills,
-                                    missing_skills: analyzed.missing_skills,
-                                    job_source: jobMeta?.source ?? null,
-                                    job_url: jobMeta?.url ?? null,
-                                    job_title: jobMeta?.title ?? null,
-                                    job_company: jobMeta?.company ?? null,
-                                  }),
-                                })
-                                const saved = await saveRes.json()
-                                await fetchHistory()
-                                setToastMsg(`Duplicated analysis${saved?.id ? ` (#${saved.id})` : ''}.`)
-                                setUndoOpen(true)
-                              } catch {}
-                              setLoading(false)
-                            }}
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      resume_text: r,
+                                      job_text: j,
+                                      score: analyzed.score,
+                                      matched_skills: analyzed.matched_skills,
+                                      missing_skills: analyzed.missing_skills,
+                                      job_source: data.result.job_source ?? null,
+                                      job_url: data.result.job_url ?? null,
+                                      job_title: data.result.job_title ?? null,
+                                      job_company: data.result.job_company ?? null,
+                                    }),
+                                  })
+                                  const saved = await saveRes.json()
+                                  await fetchHistory()
+                                  setToastMsg(`Duplicated analysis${saved?.id ? ` (#${saved.id})` : ''}.`)
+                                  setUndoOpen(true)
+                                } catch {}
+                                setLoading(false)
+                              }}
                           >Duplicate</button>
                         </div>
                       </div>

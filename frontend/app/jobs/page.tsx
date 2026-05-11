@@ -90,6 +90,16 @@ export default function JobsPage() {
     }
   }
 
+  function htmlToText(html: string): string {
+    try {
+      const el = document.createElement('div')
+      el.innerHTML = html
+      return (el.textContent || el.innerText || '').trim()
+    } catch {
+      return html.replace(/<[^>]+>/g, '').trim()
+    }
+  }
+
   function useJob(job: JobItem) {
     // Persist selected job to localStorage so analyzer page can preload
     if (typeof window !== 'undefined') {
@@ -102,8 +112,9 @@ export default function JobsPage() {
           company: job.company,
         })
       )
-      localStorage.setItem('jobmatch:selected_job_description', job.description)
-      window.location.href = '/'
+      // Store a plain-text version of the job description
+      localStorage.setItem('jobmatch:selected_job_description', htmlToText(job.description))
+      window.location.href = '/analysis'
     }
   }
 
@@ -240,9 +251,9 @@ export default function JobsPage() {
                     <button onClick={() => toggleFav(j.id)} title={favs.has(j.id) ? 'Unfavorite' : 'Favorite'} className={`px-2 py-1.5 rounded-lg text-sm font-bold border ${favs.has(j.id) ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'}`}>
                       <span className="material-symbols-outlined">{favs.has(j.id) ? 'star' : 'star_rate'}</span>
                     </button>
-                    <button onClick={() => { setPreviewJob(j); setPreviewOpen(true) }} className="border border-outline-variant px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-surface-container-low">Preview</button>
-                    <a href={j.url} target="_blank" className="border border-outline-variant px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-surface-container-low">View</a>
-                    <button onClick={() => useJob(j)} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg text-sm font-bold">Use this job</button>
+                    <button onClick={() => { setPreviewJob(j); setPreviewOpen(true) }} className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low">Preview</button>
+                    <a href={j.url} target="_blank" className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low">View</a>
+                    <button onClick={() => useJob(j)} className="bg-primary text-on-primary px-3 py-1 rounded-lg text-sm font-bold">Use this job</button>
                   </div>
                 </div>
               </div>
@@ -299,8 +310,8 @@ export default function JobsPage() {
                   <div dangerouslySetInnerHTML={{ __html: previewJob.description }} />
                 </div>
                 <div className="mt-6 flex items-center gap-2">
-                  <a href={previewJob.url} target="_blank" className="border border-outline-variant px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-surface-container-low">Open Original</a>
-                  <button onClick={() => { useJob(previewJob); setPreviewOpen(false) }} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg text-sm font-bold">Use this job</button>
+                  <a href={previewJob.url} target="_blank" className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low">Open Original</a>
+                  <button onClick={() => { useJob(previewJob); setPreviewOpen(false) }} className="bg-primary text-on-primary px-3 py-1 rounded-lg text-sm font-bold">Use this job</button>
                 </div>
               </div>
             </div>

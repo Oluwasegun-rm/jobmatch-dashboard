@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 # Copy backend code
 COPY backend /app/backend
 
-# Make jobmatch package discoverable
-ENV PYTHONPATH=/app/backend/src
+# Make backend pkg and jobmatch src discoverable
+ENV PYTHONPATH=/app:/app/backend/src
 
 EXPOSE 8000
 

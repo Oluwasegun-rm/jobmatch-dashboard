@@ -1,8 +1,79 @@
 "use client"
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [mode, setMode] = useState<'login'|'signup'>('login')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+
+  async function submit() {
+    setLoading(true)
+    setError(null)
+    try {
+      const path = mode === 'signup' ? '/auth/signup' : '/auth/login'
+      const body: any = { username, password }
+      if (mode === 'signup' && displayName.trim()) body.display_name = displayName.trim()
+      const res = await fetch(`${API_BASE}${path}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Auth failed')
+      const token = data.token as string
+      const dn = data.user?.display_name as string
+      localStorage.setItem('jobmatch:token', token)
+      localStorage.setItem('jobmatch:display_name', dn || username)
+      onClose()
+      window.location.reload()
+    } catch (e: any) {
+      setError(e?.message || 'Failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[60]">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] bg-white rounded-xl border border-outline-variant shadow-xl">
+        <div className="p-5 border-b border-outline-variant flex items-center justify-between">
+          <h3 className="text-[18px] font-semibold text-primary">{mode === 'login' ? 'Sign in' : 'Create account'}</h3>
+          <button className="material-symbols-outlined text-on-surface-variant hover:text-primary" onClick={onClose}>close</button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Username</label>
+            <input value={username} onChange={(e)=>setUsername(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="yourname" />
+          </div>
+          {mode==='signup' && (
+            <div>
+              <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Display Name</label>
+              <input value={displayName} onChange={(e)=>setDisplayName(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="What others see" />
+            </div>
+          )}
+          <div>
+            <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Password</label>
+            <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="••••••••" />
+          </div>
+          {error && <p className="text-error text-sm">{error}</p>}
+          <div className="flex items-center justify-between">
+            <button onClick={submit} disabled={loading || !username || !password} className="bg-primary text-on-primary px-5 py-2 rounded-lg font-bold disabled:opacity-50">{loading ? 'Please wait…' : (mode==='login' ? 'Sign in' : 'Create')}</button>
+            <button onClick={()=>setMode(mode==='login'?'signup':'login')} className="text-sm text-on-surface-variant hover:underline">{mode==='login'? 'Create an account' : 'Have an account? Sign in'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function LandingPage() {
+  const [authOpen, setAuthOpen] = useState(false)
   return (
     <div className="min-h-screen bg-background text-on-surface">
       <main className="max-w-[1600px] mx-auto px-gutter md:px-container-padding">
@@ -19,6 +90,7 @@ export default function LandingPage() {
             <div className="flex flex-wrap gap-4 pt-4">
               <Link href="/analysis" className="bg-primary text-on-primary px-8 py-3 rounded-lg font-bold hover:opacity-90 active:scale-[0.98]">Analyze Resume</Link>
               <Link href="/jobs" className="bg-surface border border-outline-variant text-primary px-8 py-3 rounded-lg font-bold hover:bg-surface-container-low">Browse Jobs</Link>
+              <button onClick={()=>setAuthOpen(true)} className="px-8 py-3 border border-outline-variant rounded-lg font-bold hover:bg-surface-container-low">Sign in</button>
             </div>
           </div>
           <div className="flex-1 w-full max-w-2xl">
@@ -100,6 +172,7 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+      <AuthModal open={authOpen} onClose={()=>setAuthOpen(false)} />
 
       <footer className="bg-surface-container py-12 border-t border-outline-variant">
         <div className="max-w-[1600px] mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-8">
