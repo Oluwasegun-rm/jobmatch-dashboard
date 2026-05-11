@@ -33,7 +33,8 @@ export default function AnalysisPage() {
   const [uploading, setUploading] = useState(false)
   const [fbLoading, setFbLoading] = useState(false)
   const [feedback, setFeedback] = useState<string[]>([])
-  const [rewrites, setRewrites] = useState<{original:string; improved:string}[]>([])
+  const [rewrites, setRewrites] = useState<{original:string; improved:string; rationale?: string}[]>([])
+  const [missing, setMissing] = useState<string[]>([])
   const [undoOpen, setUndoOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [prevResume, setPrevResume] = useState('')
@@ -221,7 +222,8 @@ export default function AnalysisPage() {
         const data = await res.json()
         if (!aborted) {
           setFeedback((data?.suggestions as string[]) || [])
-          setRewrites(((data?.rewrites as any[]) || []).map((r) => ({ original: String(r.original || ''), improved: String(r.improved || '') })))
+          setMissing((data?.missing_keywords as string[]) || [])
+          setRewrites(((data?.rewrites as any[]) || []).map((r) => ({ original: String(r.original || ''), improved: String(r.improved || ''), rationale: String(r.rationale || '') })))
         }
       } catch {
         if (!aborted) setFeedback([])
@@ -282,18 +284,30 @@ export default function AnalysisPage() {
             {/* Live Resume Feedback */}
             <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-6">
               <span className="text-[12px] text-on-surface-variant uppercase font-bold">Live Resume Feedback</span>
-              <ul className="mt-3 space-y-2">
-                {fbLoading && <li className="text-sm text-on-surface-variant">Analyzing…</li>}
-                {!fbLoading && feedback.map((tip, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <div className="mt-1 w-5 h-5 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-[14px] text-primary">lightbulb</span>
-                    </div>
-                    <p>{tip}</p>
-                  </li>
-                ))}
-                {!fbLoading && !feedback.length && <p className="text-sm text-on-surface-variant">Looking good. Add role-specific highlights and metrics.</p>}
-              </ul>
+              <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2">
+                  <ul className="space-y-2">
+                    {fbLoading && <li className="text-sm text-on-surface-variant">Analyzing…</li>}
+                    {!fbLoading && feedback.map((tip, i) => (
+                      <li key={i} className="flex gap-3 text-sm">
+                        <div className="mt-1 w-5 h-5 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[14px] text-primary">lightbulb</span>
+                        </div>
+                        <p>{tip}</p>
+                      </li>
+                    ))}
+                    {!fbLoading && !feedback.length && <p className="text-sm text-on-surface-variant">Looking good. Add role-specific highlights and metrics.</p>}
+                  </ul>
+                </div>
+                <div>
+                  <span className="text-[12px] text-on-surface-variant uppercase font-bold">Missing Keywords</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {missing.length ? missing.map((m)=> (
+                      <span key={m} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{m}</span>
+                    )) : <span className="text-sm text-on-surface-variant">None</span>}
+                  </div>
+                </div>
+              </div>
               {(!fbLoading && rewrites.length > 0) && (
                 <div className="mt-4">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Suggested Bullet Rewrites</span>
@@ -307,6 +321,7 @@ export default function AnalysisPage() {
                           <p className="text-sm flex-1">{r.improved}</p>
                           <button onClick={() => navigator.clipboard.writeText(r.improved)} className="px-2 py-1 border border-outline-variant rounded text-[12px] font-bold">Copy</button>
                         </div>
+                        {r.rationale && <p className="mt-2 text-[12px] text-on-surface-variant">Why: {r.rationale}</p>}
                       </div>
                     ))}
                   </div>

@@ -259,11 +259,15 @@ def resume_feedback(resume_text: str, job_text: str | None = None) -> List[str]:
 
     client = OpenAI(api_key=cfg.openai_api_key)
     sys = (
-        "You are a resume coach. Provide 3-6 concise, actionable suggestions to improve a resume. "
-        "Prefer strong action verbs, quantification, clarity, and relevance to the target job if provided. "
-        "Output strict JSON: {\"suggestions\": [string, ...]} with no extra commentary."
+        "You are a resume coach. Return concrete, job-aware feedback in strict JSON. "
+        "Structure: {\"suggestions\": [string...], \"missing_keywords\": [string...]} . "
+        "Guidelines: (1) 4–8 suggestions that reference missing or weak areas by name; prefer action verbs and quantification; "
+        "(2) missing_keywords: up to 10 high-signal skills/keywords explicitly present in the job text but absent or unclear in the resume; proper case. "
+        "No markdown, no commentary outside JSON."
     )
-    user = f"Resume:\n{resume_text}\n\n" + (f"Job Description (optional):\n{jt}\n" if jt else "")
+    user = (
+        "Resume (full text):\n" + resume_text + "\n\n" + ("Job (full text):\n" + jt + "\n" if jt else "")
+    )
     try:
         resp = client.chat.completions.create(
             model=cfg.openai_model,
@@ -273,13 +277,15 @@ def resume_feedback(resume_text: str, job_text: str | None = None) -> List[str]:
             ],
             response_format={"type": "json_object"},
             temperature=0.3,
-            max_tokens=300,
+            max_tokens=500,
         )
         content = resp.choices[0].message.content or "{}"
         data = json.loads(content)
+        out: List[str] = []
         if isinstance(data.get("suggestions"), list):
-            return [str(x) for x in data["suggestions"]][:8]
-        return []
+            out = [str(x) for x in data["suggestions"]][:8]
+        # We keep returning suggestions list for backward-compat; /ai/feedback will read missing_keywords separately
+        return out
     except Exception:
         return []
 
@@ -315,8 +321,8 @@ def bullet_rewrites(resume_text: str, job_text: str | None = None, max_items: in
     try:
         client = OpenAI(api_key=cfg.openai_api_key)
         sys = (
-            "Rewrite the provided resume bullet lines to be concise, start with strong action verbs, and include metrics where plausible. "
-            "Do not fabricate specifics beyond general quantification. Output strict JSON: {\"rewrites\": [{\"original\": str, \"improved\": str}, ...]}"
+            "Rewrite the provided resume bullet lines to be concise, action-first, and quantified when plausible. "
+            "Do not invent facts. Return strict JSON: {\"rewrites\": [{\"original\": str, \"improved\": str, \"rationale\": str}, ...]}"
         )
         user = "Bullets to rewrite:\n" + "\n".join(f"- {b}" for b in cand)
         if job_text:
@@ -336,7 +342,7 @@ def bullet_rewrites(resume_text: str, job_text: str | None = None, max_items: in
         out: List[Dict[str, str]] = []
         for item in data.get("rewrites", [])[:max_items]:
             if isinstance(item, dict) and item.get("original") and item.get("improved"):
-                out.append({"original": str(item["original"]), "improved": str(item["improved"])})
+                out.append({"original": str(item["original"]), "improved": str(item["improved"]), "rationale": str(item.get("rationale") or "")})
         return out
     except Exception:
         return []

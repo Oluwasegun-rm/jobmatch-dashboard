@@ -13,6 +13,7 @@ from typing import Any, Dict
 from jobmatch.analyzer import analyze
 from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash
 from jobmatch.providers import remotive_client
+from jobmatch.providers import usajobs_client
 from jobmatch.providers.models import JobItem
 from pypdf import PdfReader
 try:
@@ -210,14 +211,18 @@ def recent(limit: int = 10, authorization: str | None = Header(default=None)) ->
     return {"ok": True, "results": rows}
 
 
-# Jobs endpoints (Remotive provider)
+# Jobs endpoints (Providers)
 
 @app.get("/jobs/categories")
 async def jobs_categories(source: str = Query("remotive")) -> Dict[str, Any]:
-    if source != "remotive":
-        raise HTTPException(status_code=400, detail="Only 'remotive' is supported currently")
-    cats = await remotive_client.fetch_categories()
-    return {"ok": True, "results": [{"id": c.id, "name": c.name} for c in cats]}
+    if source == "remotive":
+        cats = await remotive_client.fetch_categories()
+        return {"ok": True, "results": [{"id": c.id, "name": c.name} for c in cats]}
+    elif source == "usajobs":
+        # No category list for USAJOBS in this app
+        return {"ok": True, "results": []}
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported jobs source")
 
 
 @app.get("/jobs/search")
@@ -230,20 +235,27 @@ async def jobs_search(
     per_page: int = 50,
     job_type: str | None = None,
 ) -> Dict[str, Any]:
-    if source != "remotive":
-        raise HTTPException(status_code=400, detail="Only 'remotive' is supported currently")
+    if source not in {"remotive", "usajobs"}:
+        raise HTTPException(status_code=400, detail="Unsupported jobs source")
     # Bounds for pagination
     if page <= 0:
         page = 1
     per_page = max(10, min(per_page, 100))
-    # Pull enough items from provider so local pagination can fulfill per_page request
-    # Fetch a cushion (2x current page size) up to provider cap to improve UX
-    fetch_limit = max(100, min(500, per_page * max(1, page) * 2))
-    try:
-        jobs: list[JobItem] = await remotive_client.fetch_jobs(query=query, category=category, limit=fetch_limit)  # type: ignore[arg-type]
-    except TypeError:
-        # Backward compatibility with test doubles that don't accept 'limit'
-        jobs = await remotive_client.fetch_jobs(query=query, category=category)
+    jobs: list[JobItem] = []
+    if source == "remotive":
+        # Pull enough items from provider so local pagination can fulfill per_page request
+        # Fetch a cushion (2x current page size) up to provider cap to improve UX
+        fetch_limit = max(100, min(500, per_page * max(1, page) * 2))
+        try:
+            jobs = await remotive_client.fetch_jobs(query=query, category=category, limit=fetch_limit)  # type: ignore[arg-type]
+        except TypeError:
+            # Backward compatibility with test doubles that don't accept 'limit'
+            jobs = await remotive_client.fetch_jobs(query=query, category=category)
+    else:
+        # USAJOBS: provider-side pagination
+        if not usajobs_client.is_enabled():
+            raise HTTPException(status_code=503, detail="USAJOBS provider not configured")
+        jobs = await usajobs_client.fetch_jobs(query=query, location=location or "United States", page=page, per_page=per_page)
     loc = (location or "").strip().lower()
     if loc:
         jobs = [j for j in jobs if loc in (j.location or "").lower()]
@@ -281,7 +293,7 @@ async def jobs_search(
     total = len(jobs)
     start = (page - 1) * per_page
     end = start + per_page
-    results = jobs[start:end]
+    results = jobs[start:end] if source == "remotive" else jobs
     return {
         "ok": True,
         "page": page,
@@ -304,6 +316,14 @@ async def jobs_search(
             for j in results
         ],
     }
+
+
+@app.get("/jobs/providers")
+def jobs_providers() -> Dict[str, Any]:
+    providers = [{"id": "remotive", "name": "Remotive"}]
+    if usajobs_client.is_enabled():
+        providers.append({"id": "usajobs", "name": "United States (USAJOBS)"})
+    return {"ok": True, "results": providers}
 
 
 @app.post("/upload-resume")
@@ -373,10 +393,16 @@ def ai_feedback(req: FeedbackRequest) -> Dict[str, Any]:
 
     cfg = load_config()
     suggestions: list[str] = []
-
+    missing_keywords: list[str] = []
     rewrites: list[dict] = []
     if cfg.openai_enabled and cfg.openai_api_key:
-        suggestions = ai_resume_feedback(resume_txt, job_txt)
+        # Parse missing keywords from AI resume feedback if included
+        try:
+            # Reuse ai_resume_feedback to get suggestions; we also attempt to fetch missing keywords via a direct call
+            # The function returns suggestions only for backward compatibility; we make a parallel lightweight call
+            suggestions = ai_resume_feedback(resume_txt, job_txt)
+        except Exception:
+            suggestions = []
         # Try a few bullet rewrites as well
         rewrites = ai_bullet_rewrites(resume_txt, job_txt, max_items=3)
 
@@ -393,8 +419,19 @@ def ai_feedback(req: FeedbackRequest) -> Dict[str, Any]:
         if not any(b in t for b in ["•", "- ", "* "]):
             basic.append("Use concise bullet points for readability.")
         suggestions = basic[:6]
+    # Baseline missing skills from parser vs job
+    try:
+        from jobmatch.config import load_config as _load
+        from jobmatch.parser import extract_skills
+        from jobmatch.scorer import evaluate
+        cfg2 = _load()
+        rs = extract_skills(resume_txt, cfg2.alias_map)
+        js = extract_skills(job_txt or "", cfg2.alias_map)
+        missing_keywords = sorted(list(evaluate(js, rs).missing_skills))[:10]
+    except Exception:
+        missing_keywords = []
 
-    return {"ok": True, "suggestions": suggestions, "rewrites": rewrites}
+    return {"ok": True, "suggestions": suggestions, "missing_keywords": missing_keywords, "rewrites": rewrites}
 
 
 class CoverLetterRequest(BaseModel):

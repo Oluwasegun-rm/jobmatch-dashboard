@@ -28,6 +28,8 @@ export default function JobsPage() {
   const [category, setCategory] = useState('')
   const [jobType, setJobType] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
+  const [providers, setProviders] = useState<{id:string; name:string}[]>([{ id: 'remotive', name: 'Remotive' }])
+  const [source, setSource] = useState<string>('remotive')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<JobItem[]>([])
@@ -43,19 +45,31 @@ export default function JobsPage() {
   useEffect(() => {
     async function loadCategories() {
       try {
-        const res = await fetch(`${API_BASE}/jobs/categories`)
+        const res = await fetch(`${API_BASE}/jobs/categories?source=${encodeURIComponent(source)}`)
         const data = await res.json()
         if (data?.ok) setCategories(data.results)
       } catch (e) {
         // ignore categories errors in UI
       }
     }
+    async function loadProviders() {
+      try {
+        const res = await fetch(`${API_BASE}/jobs/providers`)
+        const data = await res.json()
+        if (data?.ok && Array.isArray(data.results) && data.results.length) {
+          setProviders(data.results)
+          // Keep source if still available, else reset
+          if (!data.results.find((p:any)=>p.id===source)) setSource(data.results[0].id)
+        }
+      } catch {}
+    }
+    loadProviders()
     loadCategories()
     try {
       const raw = localStorage.getItem('jobmatch:favorites')
       if (raw) setFavs(new Set<string>(JSON.parse(raw)))
     } catch {}
-  }, [])
+  }, [source])
 
   useEffect(() => {
     return () => {
@@ -76,6 +90,7 @@ export default function JobsPage() {
       if (category) params.set('category', category)
       if (location.trim()) params.set('location', location.trim())
       if (jobType) params.set('job_type', jobType)
+      if (source) params.set('source', source)
       params.set('page', String(p))
       params.set('per_page', String(pp))
       const res = await fetch(`${API_BASE}/jobs/search?${params.toString()}`, { signal: ctrl.signal })
@@ -160,7 +175,7 @@ export default function JobsPage() {
             <div className="p-card-padding border-b border-outline-variant bg-surface-container-lowest">
               <span className="text-[12px] text-on-surface-variant uppercase font-bold">Search</span>
             </div>
-            <div className="p-card-padding grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="p-card-padding grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="col-span-2">
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Query</label>
                 <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="e.g., data analyst, machine learning" />
@@ -187,6 +202,12 @@ export default function JobsPage() {
                   <option value="contract">Contract</option>
                   <option value="freelance">Freelance</option>
                   <option value="internship">Internship</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Source</label>
+                <select value={source} onChange={(e)=>{ setSource(e.target.value); setPage(1); onSearch(1, perPage) }} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm">
+                  {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
             </div>
