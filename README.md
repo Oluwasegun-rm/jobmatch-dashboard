@@ -1,116 +1,85 @@
 JobMatch AI Dashboard
+=====================
 
-Professional, well-documented template for comparing a resume to a job description, extracting skills, computing a match score, and offering suggestions. Frontend is Next.js; backend is FastAPI; optional OpenAI features and SQLite storage.
+Compare a resume to a job description, extract skills, compute a transparent match score, surface matched/missing skills, and show concise improvement suggestions. Clean FastAPI backend, modern Next.js frontend, optional OpenAI enhancements, and SQLite persistence.
 
-Purpose
-
-JobMatch AI Dashboard is a simple, polished portfolio project that compares a resume against a job description, extracts relevant skills, computes a match score, identifies missing keywords, and proposes suggestions to improve the resume for the target role.
+Links
+- Frontend (Vercel): https://jobmatch-dashboard.vercel.app
+- Backend (Railway): https://jobmatch-dashboard-production.up.railway.app
 
 Features
+- Analysis: paste/upload resume + paste job description
+- Transparent skill extraction and overlap score (keyword-based baseline)
+- Optional AI assist (GPT‑5 or fallback): multi-sentence narrative explanation and suggestions
+- Jobs page (Remotive): filters, quick preview, select “Use this job” → Analysis
+- Persistence (SQLite): auto-save analysis, history, and user-scoped recent
+- Authentication: username/password with display name; JWT-like HMAC tokens
+- Docker-first dev experience and CI
 
-- Paste resume text and job description directly into the app
-- Clean, keyword-based skill extraction (transparent and editable)
-- Match score based on overlap between job-required and resume-present skills
-- Clear lists of matched and missing skills
-- Actionable, plain-language suggestions to improve alignment
-- Optional SQLite persistence for saving analysis results
-- Beginner-friendly, readable Python with small functions and type hints
+Architecture
+- Frontend: Next.js 14 (App Router), Tailwind
+- Backend: FastAPI, Python 3.12, SQLite
+- Providers: Remotive API via httpx, tiny in-memory TTL cache
+- AI: OpenAI SDK (chat.completions JSON-mode → retry → Responses API), conservative scoring and narrative guardrails
 
-Tech Stack
+Screenshots
+- Analysis, Jobs, and Settings pages fit a cohesive, minimal visual language (add images in docs/ when available)
 
-- Frontend: Next.js (React), Tailwind CSS
-- Backend: Python 3.9+, FastAPI, SQLite (stdlib)
-- Tooling: Pytest, Ruff, Black, python-dotenv
+Quick Start (Docker-first)
+1. Set your OpenAI key (optional for baseline; required for AI narrative):
+   export OPENAI_API_KEY=sk-...
+   Optional: export OPENAI_FALLBACK_MODEL=gpt-4o-mini
+2. Start backend (Docker):
+   make dev
+   Backend runs on http://localhost:8000; logs show AI and CORS configs
+3. Start frontend:
+   cd frontend && npm install && npm run dev
+   Open http://localhost:3000 (NEXT_PUBLIC_API_BASE_URL should point to http://localhost:8000)
 
-Quick Start
+Auth
+- Signup: POST /auth/signup (username, password, optional display_name)
+- Login: POST /auth/login → returns token and user
+- Me: GET /auth/me (bearer token) → returns user (DB-backed)
+- Update display name: POST /auth/display-name
+- Change username: POST /auth/change-username → returns refreshed token
+- Change password: POST /auth/change-password
 
-1. Clone or open this folder
-2. Backend setup
-   - Create and activate a virtualenv
-     - macOS/Linux: `python3 -m venv .venv && source .venv/bin/activate`
-     - Windows (PowerShell): `py -m venv .venv; .venv\\Scripts\\Activate.ps1`
-   - Copy `.env.example` to `.env` and edit if desired
-   - Install backend deps: `make backend-install`
-   - Run backend API: `make backend-run` (http://localhost:8000)
-     - First run may show messages like "satisfying dependency requirements" while uv installs deps; it will then start Uvicorn
-     - If `uv` is not installed, it will auto-fallback to system Python
-     - You can also run explicitly without uv: `make backend-run-plain`
-3. Frontend setup
-   - `cd frontend && npm install`
-   - `npm run dev` (http://localhost:3000)
-   - Ensure `NEXT_PUBLIC_API_BASE_URL` in `frontend/.env.local` points to the backend (default http://localhost:8000)
+Core Endpoints
+- GET /health → { status: ok }
+- POST /analyze → returns score, matched/missing, AI narrative (when enabled)
+- POST /save → persists result (user-scoped when authorized)
+- GET /recent → latest analyses (authorized returns user’s items)
+- GET /analysis/{id} → load a saved analysis
+- Jobs: GET /jobs/categories, GET /jobs/search (tokenized post-filter + pagination)
 
-Tests
+Environment
+- Backend
+  - OPENAI_API_KEY: your key (required for AI features)
+  - OPENAI_MODEL: default gpt-5
+  - OPENAI_FALLBACK_MODEL: optional fallback (e.g., gpt-4o-mini)
+  - OPENAI_ENABLED: true/false (true by default in Docker)
+  - DB_PATH: SQLite path (default jobmatch.db)
+  - AUTH_SECRET_KEY: HMAC secret for tokens (falls back to OPENAI_API_KEY or dev-secret)
+  - ALLOWED_ORIGINS: comma-separated list of allowed origins (no quotes)
+  - ALLOWED_ORIGIN_REGEX: optional regex (e.g., ^https://.*\.vercel\.app$)
+- Frontend
+  - NEXT_PUBLIC_API_BASE_URL: base URL of backend (e.g., http://localhost:8000 or Railway URL)
 
-- Run unit tests (backend): `make test`
+Testing
+- Backend (local): make test
+- Backend (Docker): make test-docker
+- CI: GitHub Actions runs tests and builds frontend on pushes/PRs to main
 
-Makefile Commands
+Troubleshooting
+- Apple Silicon (local Python wheels): use Docker (make dev) or Homebrew Python arm64. See AGENTS.md.
+- CORS (prod on Vercel/Railway): set ALLOWED_ORIGINS to your Vercel URL without quotes or use ALLOWED_ORIGIN_REGEX for previews. The backend now explicitly handles OPTIONS preflight and echoes Access-Control-Allow-Origin for allowed origins.
+- AI 400 errors: some accounts/models reject response_format; the backend auto-retries and can fall back to Responses API or a fallback model.
 
-- `make backend-install` — Install backend Python requirements
-- `make backend-run` — Run FastAPI with Uvicorn (via uv)
-- `make backend-run-plain` — Run FastAPI with Uvicorn (system Python)
-- `make frontend-install` — Install frontend npm packages
-- `make frontend-dev` — Run Next.js dev server
-- `make dev` — Start backend (convenience)
-- `make test` — Run backend tests with pytest
-- `make lint` — Lint backend with ruff
-- `make format` — Auto-format backend with ruff (fix) and black
-- `make clean` — Remove caches and temporary files
+Contributing
+- See CONTRIBUTING.md for workflow, commit style, and PR guidance.
 
-Folder Structure
+License
+- MIT (see LICENSE)
 
-jobmatch-ai-dashboard/
-- README.md
-- AGENTS.md
-- Makefile
-- .gitignore
-- .env.example
-- frontend/
-  - app/
-    - layout.tsx
-    - page.tsx
-  - styles/globals.css
-  - package.json
-  - tailwind.config.js
-  - postcss.config.js
-  - next.config.mjs
-- backend/
-  - app.py
-  - requirements.txt
-  - src/
-    - jobmatch/
-      - __init__.py
-      - analyzer.py
-      - parser.py
-      - scorer.py
-      - storage.py
-      - config.py
-  - tests/
-    - __init__.py
-    - test_analyzer.py
-    - test_scorer.py
-- data/
-  - sample_jobs.csv
-- docs/
-  - project_overview.md
-- scripts/
-  - seed_data.py
-
-Usage Notes
-
-- The app uses a simple, explicit vocabulary and alias list for skills. Edit `backend/src/jobmatch/config.py` to adjust skills or add aliases. You can also provide extra comma-separated skills via `EXTRA_SKILLS` in `.env`.
-- The SQLite database file path defaults to `jobmatch.db` in the project root. Override via `DB_PATH` in `.env`.
-- For local dev CORS, backend allows all origins by default. Set `ALLOWED_ORIGINS` in `.env` when deploying.
-
-CI
-
-- GitHub Actions workflow at `.github/workflows/ci.yml` runs backend tests and builds the frontend on pushes and pull requests to `main`.
-
-Future Improvements
-
-1. Weighted scoring by importance/frequency in the job description
-2. Section-aware parsing (experience vs. summary vs. skills)
-3. Export analysis as PDF/Markdown
-4. Optional semantic matching (e.g., embeddings) while keeping the keyword system as a transparent baseline
-5. Multi-resume comparison and batch processing
-6. Advanced analytics views and filters in the dashboard
+Credits
+- Remotive API for job listings; OpenAI SDK for optional AI assist; FastAPI and Next.js communities.

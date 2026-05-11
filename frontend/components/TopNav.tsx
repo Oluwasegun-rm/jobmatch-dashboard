@@ -83,7 +83,18 @@ export default function TopNav() {
               </div>
             </div>
           ) : (
-            <Link href="/" className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low">Sign in</Link>
+            <button
+              onClick={() => {
+                try {
+                  if (pathname !== '/') {
+                    window.location.href = '/?signin=1'
+                  } else {
+                    window.dispatchEvent(new CustomEvent('jobmatch:open-auth'))
+                  }
+                } catch {}
+              }}
+              className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low"
+            >Sign in</button>
           )}
         </div>
       </nav>
