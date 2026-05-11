@@ -5,6 +5,8 @@ import re
 import logging
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response, PlainTextResponse
 from pydantic import BaseModel
 from typing import Any, Dict
 
@@ -58,6 +60,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _origin_allowed(origin: str | None) -> bool:
+    if not origin:
+        return False
+    if origin in origins:
+        return True
+    if allow_origin_regex:
+        try:
+            return re.match(allow_origin_regex, origin) is not None
+        except Exception:
+            return False
+    return False
+
+
+class PreflightCORS(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):  # type: ignore[override]
+        origin = request.headers.get("origin")
+        if request.method == "OPTIONS" and _origin_allowed(origin):
+            headers = {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+                "Access-Control-Allow-Headers": request.headers.get(
+                    "access-control-request-headers", "Authorization, Content-Type, Accept, X-Requested-With"
+                ),
+                "Vary": "Origin",
+            }
+            return PlainTextResponse("", status_code=200, headers=headers)
+
+        # Regular request: proceed and ensure headers are present when allowed
+        response: Response = await call_next(request)
+        if _origin_allowed(origin):
+            response.headers["Access-Control-Allow-Origin"] = origin  # echo back
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers.setdefault("Vary", "Origin")
+        return response
+
+
+# Add our preflight handler last so it runs before others
+app.add_middleware(PreflightCORS)
 
 
 class AnalyzeRequest(BaseModel):
