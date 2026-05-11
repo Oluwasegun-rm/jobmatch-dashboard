@@ -32,7 +32,9 @@ Quick Start
    - Copy `.env.example` to `.env` and edit if desired
    - Install backend deps: `make backend-install`
    - Run backend API: `make backend-run` (http://localhost:8000)
-     - If `uv` is not installed, use: `make backend-run-plain`
+     - First run may show messages like "satisfying dependency requirements" while uv installs deps; it will then start Uvicorn
+     - If `uv` is not installed, it will auto-fallback to system Python
+     - You can also run explicitly without uv: `make backend-run-plain`
 3. Frontend setup
    - `cd frontend && npm install`
    - `npm run dev` (http://localhost:3000)
