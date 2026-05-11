@@ -41,10 +41,11 @@ def _map_job(item: Dict[str, Any]) -> JobItem:
     )
 
 
-async def fetch_jobs(query: str, category: str | None = None, timeout: float = 10.0) -> JobList:
+async def fetch_jobs(query: str, category: str | None = None, *, limit: int | None = 200, timeout: float = 10.0, **_: Any) -> JobList:
     q = (query or "").strip()
     cat = (category or "").strip()
-    cache_key = f"remotive:search:{q}:{cat}"
+    lim = max(1, min(int(limit or 200), 500))  # safety bounds
+    cache_key = f"remotive:search:{q}:{cat}:{lim}"
     cached = provider_cache.get(cache_key)
     if cached is not None:
         return cached
@@ -54,6 +55,9 @@ async def fetch_jobs(query: str, category: str | None = None, timeout: float = 1
         params["search"] = q
     if cat:
         params["category"] = cat
+    # Ask Remotive for enough items so our local pagination can honor per_page
+    if lim:
+        params["limit"] = str(lim)
 
     async with httpx.AsyncClient(timeout=timeout) as client:
         resp = await client.get(REMOTIVE_BASE, params=params)

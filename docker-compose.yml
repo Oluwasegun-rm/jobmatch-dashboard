@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    working_dir: /app/backend
+    env_file:
+      - .env
+    # environment:
+    #   - DB_PATH=/data/jobmatch.db
+    #   - OPENAI_ENABLED=${OPENAI_ENABLED:-true}
+    #   - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    #   - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5}
+    #   - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+    ports:
+      - "${PORT:-8000}:8000"
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - backend_data:/data
+
+volumes:
+  backend_data:

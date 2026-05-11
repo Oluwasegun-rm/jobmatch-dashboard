@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import os
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File
+import logging
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Dict
 
 from jobmatch.analyzer import analyze
-from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db
-from jobmatch.providers.remotive_client import fetch_categories as remotive_categories, fetch_jobs as remotive_jobs
+from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name
+from jobmatch.providers import remotive_client
 from jobmatch.providers.models import JobItem
 from pypdf import PdfReader
 try:
@@ -19,7 +20,11 @@ from jobmatch.ai import resume_feedback as ai_resume_feedback
 from jobmatch.ai import bullet_rewrites as ai_bullet_rewrites
 from jobmatch.ai import cover_letter as ai_cover_letter
 from jobmatch.config import load_config
+from jobmatch.auth import hash_password, verify_password, create_token, decode_token, extract_bearer_token
 
+
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+log = logging.getLogger("jobmatch.app")
 
 app = FastAPI(title="JobMatch AI Backend", version="0.1.0")
 
@@ -49,15 +54,44 @@ def health() -> Dict[str, str]:
 def _startup() -> None:
     # Ensure DB exists
     init_db()
+    # Log sanitized environment/config for debugging
+    try:
+        from jobmatch.config import load_config as _load
+
+        cfg = _load()
+        def _mask(s: str | None) -> str:
+            if not s:
+                return "<empty>"
+            if len(s) <= 8:
+                return "****"
+            return f"****{s[-4:]}"
+        log.info(
+            "Startup config: OPENAI_ENABLED=%s OPENAI_MODEL=%s OPENAI_API_KEY=%s DB_PATH=%s ALLOWED_ORIGINS=%s",
+            bool(cfg.openai_enabled), cfg.openai_model, _mask(cfg.openai_api_key), cfg.db_path, origins_env,
+        )
+    except Exception as e:
+        log.warning("Failed to log startup config: %s", type(e).__name__)
 
 
 @app.post("/analyze")
-def analyze_endpoint(req: AnalyzeRequest) -> Dict[str, Any]:
+def analyze_endpoint(req: AnalyzeRequest, authorization: str | None = Header(default=None)) -> Dict[str, Any]:
     # Basic input size guardrails
     if len(req.resume_text) > 50_000 or len(req.job_text) > 50_000:
         raise HTTPException(status_code=413, detail="Input too large (limit 50k chars)")
     result = analyze(req.resume_text, req.job_text)
-    return {"ok": True, "result": result.to_dict()}
+    # Log meta of AI usage from the result (if present)
+    try:
+        data = result.to_dict()
+        meta = data.get("meta", {})
+        matched_ct = len(data.get("matched_skills", []) or [])
+        missing_ct = len(data.get("missing_skills", []) or [])
+        log.info(
+            "Analyze: score=%s ai_used=%s narrative_source=%s matches=%s missing=%s resume_len=%s job_len=%s",
+            data.get("score"), meta.get("ai_used"), meta.get("narrative_source"), matched_ct, missing_ct, len(req.resume_text or ""), len(req.job_text or ""),
+        )
+        return {"ok": True, "result": data}
+    except Exception:
+        return {"ok": True, "result": result.to_dict()}
 
 
 class SaveRequest(BaseModel):
@@ -73,7 +107,16 @@ class SaveRequest(BaseModel):
 
 
 @app.post("/save")
-def save_endpoint(req: SaveRequest) -> Dict[str, Any]:
+def save_endpoint(req: SaveRequest, authorization: str | None = Header(default=None)) -> Dict[str, Any]:
+    user_id: int | None = None
+    tok = extract_bearer_token(authorization)
+    if tok:
+        payload = decode_token(tok)
+        if payload:
+            try:
+                user_id = int(payload.get("sub"))
+            except Exception:
+                user_id = None
     rid = save_analysis(
         resume_text=req.resume_text,
         job_text=req.job_text,
@@ -84,13 +127,23 @@ def save_endpoint(req: SaveRequest) -> Dict[str, Any]:
         job_url=req.job_url,
         job_title=req.job_title,
         job_company=req.job_company,
+        user_id=user_id,
     )
     return {"ok": True, "id": rid}
 
 
 @app.get("/recent")
-def recent(limit: int = 10) -> Dict[str, Any]:
-    rows = fetch_recent(limit=limit)
+def recent(limit: int = 10, authorization: str | None = Header(default=None)) -> Dict[str, Any]:
+    user_id: int | None = None
+    tok = extract_bearer_token(authorization)
+    if tok:
+        payload = decode_token(tok)
+        if payload:
+            try:
+                user_id = int(payload.get("sub"))
+            except Exception:
+                user_id = None
+    rows = fetch_recent(limit=limit, user_id=user_id)
     return {"ok": True, "results": rows}
 
 
@@ -100,7 +153,7 @@ def recent(limit: int = 10) -> Dict[str, Any]:
 async def jobs_categories(source: str = Query("remotive")) -> Dict[str, Any]:
     if source != "remotive":
         raise HTTPException(status_code=400, detail="Only 'remotive' is supported currently")
-    cats = await remotive_categories()
+    cats = await remotive_client.fetch_categories()
     return {"ok": True, "results": [{"id": c.id, "name": c.name} for c in cats]}
 
 
@@ -120,7 +173,14 @@ async def jobs_search(
     if page <= 0:
         page = 1
     per_page = max(10, min(per_page, 100))
-    jobs: list[JobItem] = await remotive_jobs(query=query, category=category)
+    # Pull enough items from provider so local pagination can fulfill per_page request
+    # Fetch a cushion (2x current page size) up to provider cap to improve UX
+    fetch_limit = max(100, min(500, per_page * max(1, page) * 2))
+    try:
+        jobs: list[JobItem] = await remotive_client.fetch_jobs(query=query, category=category, limit=fetch_limit)  # type: ignore[arg-type]
+    except TypeError:
+        # Backward compatibility with test doubles that don't accept 'limit'
+        jobs = await remotive_client.fetch_jobs(query=query, category=category)
     loc = (location or "").strip().lower()
     if loc:
         jobs = [j for j in jobs if loc in (j.location or "").lower()]
@@ -304,3 +364,63 @@ def get_analysis(analysis_id: int) -> Dict[str, Any]:
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"ok": True, "result": row}
+
+
+# --- Auth Endpoints ---
+
+class SignupRequest(BaseModel):
+    username: str
+    password: str
+    display_name: str | None = None
+
+
+@app.post("/auth/signup")
+def auth_signup(req: SignupRequest) -> Dict[str, Any]:
+    if not req.username or not req.password:
+        raise HTTPException(status_code=400, detail="username and password required")
+    if get_user_by_username(req.username):
+        raise HTTPException(status_code=409, detail="username is taken")
+    ph = hash_password(req.password)
+    uid = create_user(req.username, ph, req.display_name or None, is_admin=False)
+    token = create_token(uid, req.username, req.display_name or req.username)
+    return {"ok": True, "token": token, "user": {"id": uid, "username": req.username, "display_name": req.display_name or req.username}}
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/auth/login")
+def auth_login(req: LoginRequest) -> Dict[str, Any]:
+    u = get_user_by_username(req.username)
+    if not u or not verify_password(req.password, u["password_hash"]):
+        raise HTTPException(status_code=401, detail="invalid credentials")
+    token = create_token(u["id"], u["username"], u.get("display_name") or u["username"])
+    return {"ok": True, "token": token, "user": {"id": u["id"], "username": u["username"], "display_name": u.get("display_name") or u["username"]}}
+
+
+@app.get("/auth/me")
+def auth_me(authorization: str | None = Header(default=None)) -> Dict[str, Any]:
+    tok = extract_bearer_token(authorization)
+    if not tok:
+        raise HTTPException(status_code=401, detail="missing token")
+    p = decode_token(tok)
+    if not p:
+        raise HTTPException(status_code=401, detail="invalid token")
+    return {"ok": True, "user": {"id": p.get("sub"), "username": p.get("usr"), "display_name": p.get("name")}}
+
+
+class DisplayNameRequest(BaseModel):
+    display_name: str
+
+
+@app.post("/auth/display-name")
+def auth_display_name(req: DisplayNameRequest, authorization: str | None = Header(default=None)) -> Dict[str, Any]:
+    tok = extract_bearer_token(authorization)
+    p = decode_token(tok or "")
+    if not p:
+        raise HTTPException(status_code=401, detail="invalid token")
+    uid = int(p.get("sub"))
+    update_display_name(uid, req.display_name)
+    return {"ok": True}
