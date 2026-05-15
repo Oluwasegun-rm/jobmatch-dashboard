@@ -157,7 +157,7 @@ export default function JobsPage() {
     <div className="min-h-screen">
       {/* Main */}
       <main className="min-h-screen flex flex-col">
-        <PageToolbar title="Jobs" placeholder="Search saved jobs...">
+        <PageToolbar placeholder="Search saved jobs...">
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setFavoritesOnly(false); setPage(1); onSearch(1, perPage) }}

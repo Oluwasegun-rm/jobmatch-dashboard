@@ -241,7 +241,7 @@ export default function AnalysisPage() {
     <div className="min-h-screen">
       {/* Main */}
       <main className="min-h-screen flex flex-col">
-        <PageToolbar title="Analysis" placeholder="Search analysis history..." />
+        <PageToolbar placeholder="Search analysis history..." />
         <div className="p-container-padding max-w-[1600px] mx-auto w-full grid grid-cols-12 gap-gutter">
           {/* Left column */}
           <div className="col-span-12 lg:col-span-8 space-y-6">

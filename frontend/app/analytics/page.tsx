@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
     <div className="min-h-screen">
       {/* Main */}
       <main className="min-h-screen">
-        <PageToolbar title="Analytics" placeholder="Search analytics...">
+        <PageToolbar placeholder="Search analytics...">
           <button onClick={() => exportCSV(items)} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium flex items-center gap-2 active:scale-[0.98]">
             <span className="material-symbols-outlined text-[18px]">download</span>
             Export CSV

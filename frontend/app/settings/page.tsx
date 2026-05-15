@@ -128,7 +128,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen">
       <main className="min-h-screen">
-        <PageToolbar title="Settings" placeholder="Search settings..." />
+        <PageToolbar placeholder="Search settings..." />
         <div className="max-w-[1200px] mx-auto p-container-padding">
           <div className="mb-6">
             <h1 className="text-display-lg text-primary mb-1">Account Settings</h1>
