@@ -409,7 +409,42 @@ export default function AnalysisPage() {
                 {/* Analysis Summary */}
                 <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Analysis Summary</span>
-                  <p className="mt-2 text-sm text-on-surface-variant whitespace-pre-wrap">{result.narrative || 'This resume shows partial alignment with the role based on explicit skill overlap.'}</p>
+                  {/* Overview */}
+                  <div className="mt-2">
+                    <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Overview</span>
+                    <p className="mt-1 text-sm text-on-surface-variant whitespace-pre-wrap">{result.narrative || 'This resume shows partial alignment with the role based on explicit skill overlap.'}</p>
+                  </div>
+                  {/* Matched / Missing quick chips */}
+                  <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Matched Highlights</span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {result.matched_skills.length ? result.matched_skills.slice(0,6).map((s) => (
+                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{s}</span>
+                        )) : <span className="text-sm text-on-surface-variant">None</span>}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Missing / Weak Areas</span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {result.missing_skills.length ? result.missing_skills.slice(0,6).map((s) => (
+                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-error/10 border border-error/20 text-error">{s}</span>
+                        )) : <span className="text-sm text-on-surface-variant">None</span>}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Action steps preview (subset of suggestions) */}
+                  <div className="mt-4">
+                    <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Action Steps (Preview)</span>
+                    <ul className="mt-2 space-y-1 list-disc list-inside text-sm text-on-surface-variant">
+                      {(result.suggestions || []).slice(0,2).map((tip, i) => (
+                        <li key={i}>{tip}</li>
+                      ))}
+                      {(!result.suggestions || result.suggestions.length === 0) && (
+                        <li className="text-on-surface-variant">Tailor the summary to highlight the most relevant skills and quantify impact.</li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
 
                 {/* Suggestions */}
