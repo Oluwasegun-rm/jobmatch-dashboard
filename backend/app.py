@@ -506,41 +506,69 @@ def extract_job(req: ExtractJobRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="disallowed host")
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; JobMatchBot/1.0; +https://github.com/Oluwasegun-rm/jobmatch-dashboard)",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36 JobMatchBot/1.0 (+https://github.com/Oluwasegun-rm/jobmatch-dashboard)",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
     }
-    # Special-case Greenhouse embed links: rewrite to canonical job page
+    candidate_urls: list[tuple[str, dict[str, str]]] = [(raw, dict(headers))]
+    # Special-case Greenhouse embed links: rewrite to canonical job page and try multiple variants
     if (p.hostname or "").endswith("greenhouse.io") and "/embed/job_app" in (p.path or ""):
         try:
             qs = parse_qs(p.query)
             company = (qs.get("for") or [None])[0]
             token = (qs.get("token") or [None])[0]
             if company and token:
-                raw = f"https://boards.greenhouse.io/{company}/jobs/{token}"
-                p = urlparse(raw)
-                # Set a referer to reduce 404s on some hosts
-                headers["Referer"] = "https://boards.greenhouse.io/"
+                # Canonical boards URL
+                gh1 = f"https://boards.greenhouse.io/{company}/jobs/{token}"
+                h1 = dict(headers); h1["Referer"] = "https://boards.greenhouse.io/"
+                candidate_urls.append((gh1, h1))
+                # With trailing slash (some hosts redirect differently)
+                gh2 = f"https://boards.greenhouse.io/{company}/jobs/{token}/"
+                candidate_urls.append((gh2, h1))
+                # Fallback to embed host directly (rarely returns full HTML but try)
+                gh3 = f"https://job-boards.greenhouse.io/embed/job_app?for={company}&token={token}"
+                h3 = dict(headers); h3["Referer"] = "https://job-boards.greenhouse.io/"
+                candidate_urls.append((gh3, h3))
         except Exception:
             pass
-    try:
-        with httpx.Client(timeout=10.0, follow_redirects=True, headers=headers) as client:
-            resp = client.get(raw)
-            resp.raise_for_status()
-            content = resp.text or ""
-            if len(content) > 4_000_000:
-                raise HTTPException(status_code=413, detail="page too large")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"failed to fetch url: {type(e).__name__}")
+    last_err: Exception | None = None
+    content = ""
+    for url_try, hdrs in candidate_urls:
+        try:
+            with httpx.Client(timeout=12.0, follow_redirects=True, headers=hdrs) as client:
+                resp = client.get(url_try)
+                # Some providers return 403/404 on first try; continue to next candidate
+                if resp.status_code >= 400:
+                    last_err = httpx.HTTPStatusError("bad status", request=resp.request, response=resp)
+                    continue
+                content = resp.text or ""
+                if len(content) > 4_000_000:
+                    raise HTTPException(status_code=413, detail="page too large")
+                raw = url_try  # use the resolved/canonical URL
+                break
+        except HTTPException:
+            raise
+        except Exception as e:
+            last_err = e
+            continue
+    if not content:
+        if last_err:
+            raise HTTPException(status_code=502, detail=f"failed to fetch url: {type(last_err).__name__}")
+        raise HTTPException(status_code=502, detail="failed to fetch url")
 
     # Readability extraction
     try:
         doc = Document(content)
         title = (doc.short_title() or "").strip()
+        # Prefer summary; if too small, fall back to full body text
         summary_html = doc.summary(html_partial=False) or ""
         root = lxml_html.fromstring(summary_html)
-        text = root.text_content().strip()
+        text = (root.text_content() or "").strip()
+        if len(text) < 240:
+            full_root = lxml_html.fromstring(content)
+            text_full = (full_root.text_content() or "").strip()
+            if len(text_full) > len(text):
+                text = text_full
     except Exception:
         title, text = "", ""
 
