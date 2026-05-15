@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
@@ -8,18 +9,22 @@ const links = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/analysis", label: "Analysis" },
   { href: "/analytics", label: "Analytics" },
-  { href: "/settings", label: "Settings" },
+  { href: "/settings", label: "Settings", private: true as const },
   { href: "/jobs", label: "Jobs" },
 ]
 
 export default function TopNav() {
   const pathname = usePathname() || "/"
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const [hasToken, setHasToken] = useState<boolean>(false)
+  const [logoOk, setLogoOk] = useState<boolean>(true)
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
   useEffect(() => {
     try {
       const dn = localStorage.getItem('jobmatch:display_name')
       setDisplayName(dn)
+      const t = localStorage.getItem('jobmatch:token')
+      setHasToken(!!t)
     } catch {}
     const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
     async function loadMe() {
@@ -31,6 +36,7 @@ export default function TopNav() {
           const dn = (data.user?.display_name as string) || (data.user?.username as string)
           setDisplayName(dn)
           localStorage.setItem('jobmatch:display_name', dn)
+          setHasToken(true)
         }
       } catch {}
     }
@@ -39,6 +45,8 @@ export default function TopNav() {
       try {
         const dn = localStorage.getItem('jobmatch:display_name')
         setDisplayName(dn)
+        const t = localStorage.getItem('jobmatch:token')
+        setHasToken(!!t)
       } catch {}
     }
     window.addEventListener('storage', handleChange)
@@ -51,25 +59,38 @@ export default function TopNav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
       <nav className="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[28px]">home</span>
-          <span className="text-[18px] font-semibold tracking-tight text-primary">JobMatch AI</span>
+        <Link href="/" className="flex items-center gap-2" aria-label="JobMatch AI Home">
+          {logoOk ? (
+            <Image
+              src="/logo.svg"
+              alt="JobMatch AI"
+              width={256}
+              height={64}
+              className="h-14 w-auto object-contain"
+              priority
+              onError={() => setLogoOk(false)}
+            />
+          ) : (
+            <span className="text-[18px] font-semibold tracking-tight text-primary">JobMatch AI</span>
+          )}
         </Link>
         <div className="hidden md:flex items-center gap-8">
-          {links.map((l) => {
-            const active = pathname === l.href
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={
-                  active
-                    ? "font-medium text-primary border-b-2 border-primary py-1"
-                    : "font-medium text-on-surface-variant hover:text-primary"
-                }
-              >
-                {l.label}
-              </Link>
+          {links
+            .filter(l => !(l as any).private || hasToken)
+            .map((l) => {
+              const active = pathname === l.href
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={
+                    active
+                      ? "font-medium text-primary border-b-2 border-primary py-1"
+                      : "font-medium text-on-surface-variant hover:text-primary"
+                  }
+                >
+                  {l.label}
+                </Link>
             )
           })}
         </div>

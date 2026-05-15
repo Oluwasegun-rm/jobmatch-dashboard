@@ -32,7 +32,7 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       {/* Main */}
       <main className="min-h-screen flex flex-col">
-        <PageToolbar title="Dashboard" placeholder="Search analyses..." />
+        <PageToolbar placeholder="Search analyses..." />
         <div className="p-container-padding max-w-[1600px] mx-auto w-full space-y-6">
           {/* Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter">

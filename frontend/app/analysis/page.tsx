@@ -31,9 +31,12 @@ export default function AnalysisPage() {
   const [history, setHistory] = useState<RecentItem[]>([])
   const [jobMeta, setJobMeta] = useState<JobMeta | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [jobUrl, setJobUrl] = useState('')
+  const [importing, setImporting] = useState(false)
   const [fbLoading, setFbLoading] = useState(false)
   const [feedback, setFeedback] = useState<string[]>([])
-  const [rewrites, setRewrites] = useState<{original:string; improved:string}[]>([])
+  const [rewrites, setRewrites] = useState<{original:string; improved:string; rationale?: string}[]>([])
+  const [missing, setMissing] = useState<string[]>([])
   const [undoOpen, setUndoOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [prevResume, setPrevResume] = useState('')
@@ -221,7 +224,8 @@ export default function AnalysisPage() {
         const data = await res.json()
         if (!aborted) {
           setFeedback((data?.suggestions as string[]) || [])
-          setRewrites(((data?.rewrites as any[]) || []).map((r) => ({ original: String(r.original || ''), improved: String(r.improved || '') })))
+          setMissing((data?.missing_keywords as string[]) || [])
+          setRewrites(((data?.rewrites as any[]) || []).map((r) => ({ original: String(r.original || ''), improved: String(r.improved || ''), rationale: String(r.rationale || '') })))
         }
       } catch {
         if (!aborted) setFeedback([])
@@ -239,7 +243,7 @@ export default function AnalysisPage() {
     <div className="min-h-screen">
       {/* Main */}
       <main className="min-h-screen flex flex-col">
-        <PageToolbar title="Analysis" placeholder="Search analysis history..." />
+        <PageToolbar placeholder="Search analysis history..." />
         <div className="p-container-padding max-w-[1600px] mx-auto w-full grid grid-cols-12 gap-gutter">
           {/* Left column */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
@@ -250,6 +254,51 @@ export default function AnalysisPage() {
                   Workspace
                 </h2>
                 <div className="flex items-center gap-2">
+                  <div className="hidden md:flex items-center gap-2">
+                    <input
+                      value={jobUrl}
+                      onChange={(e)=>setJobUrl(e.target.value)}
+                      className="w-72 p-2 border border-outline-variant rounded-lg text-sm"
+                      placeholder="Paste job link…"
+                    />
+                    <button
+                      onClick={async ()=>{
+                        const u = jobUrl.trim(); if (!u) return;
+                        if (job.trim()) {
+                          const ok = window.confirm('Replace current job description with extracted text?')
+                          if (!ok) return
+                        }
+                        setImporting(true)
+                        try {
+                          // Try backend first
+                          let ok = false
+                          try {
+                            const res = await fetch(`${API_BASE}/extract-job`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u }) })
+                            const data = await res.json()
+                            if (res.ok && data?.ok) {
+                              setJob(String(data.text || ''))
+                              setJobMeta({ ...(jobMeta||{}), url: String(data.source_url||u), title: String(data.title||'') })
+                              ok = true
+                            }
+                          } catch {}
+                          if (!ok) {
+                            // Fallback to Next.js API route using TS Readability
+                            const res2 = await fetch(`/api/extract`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u }) })
+                            const data2 = await res2.json()
+                            if (!res2.ok || !data2?.ok) throw new Error(data2?.detail || 'Failed to extract')
+                            setJob(String(data2.text || ''))
+                            setJobMeta({ ...(jobMeta||{}), url: String(data2.source_url||u), title: String(data2.title||'') })
+                          }
+                          setToastMsg('Imported job description from link.')
+                          setUndoOpen(true)
+                        } catch(e:any) {
+                          alert(e?.message || 'Failed to import job text. Paste manually.')
+                        } finally { setImporting(false) }
+                      }}
+                      disabled={importing}
+                      className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-surface-container-low"
+                    >{importing ? 'Importing…' : 'Import'}</button>
+                  </div>
                   <input id="resume-file" type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0]
                     if (f) onUploadResume(f)
@@ -282,18 +331,30 @@ export default function AnalysisPage() {
             {/* Live Resume Feedback */}
             <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-6">
               <span className="text-[12px] text-on-surface-variant uppercase font-bold">Live Resume Feedback</span>
-              <ul className="mt-3 space-y-2">
-                {fbLoading && <li className="text-sm text-on-surface-variant">Analyzing…</li>}
-                {!fbLoading && feedback.map((tip, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <div className="mt-1 w-5 h-5 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-[14px] text-primary">lightbulb</span>
-                    </div>
-                    <p>{tip}</p>
-                  </li>
-                ))}
-                {!fbLoading && !feedback.length && <p className="text-sm text-on-surface-variant">Looking good. Add role-specific highlights and metrics.</p>}
-              </ul>
+              <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2">
+                  <ul className="space-y-2">
+                    {fbLoading && <li className="text-sm text-on-surface-variant">Analyzing…</li>}
+                    {!fbLoading && feedback.map((tip, i) => (
+                      <li key={i} className="flex gap-3 text-sm">
+                        <div className="mt-1 w-5 h-5 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[14px] text-primary">lightbulb</span>
+                        </div>
+                        <p>{tip}</p>
+                      </li>
+                    ))}
+                    {!fbLoading && !feedback.length && <p className="text-sm text-on-surface-variant">Looking good. Add role-specific highlights and metrics.</p>}
+                  </ul>
+                </div>
+                <div>
+                  <span className="text-[12px] text-on-surface-variant uppercase font-bold">Missing Keywords</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {missing.length ? missing.map((m)=> (
+                      <span key={m} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{m}</span>
+                    )) : <span className="text-sm text-on-surface-variant">None</span>}
+                  </div>
+                </div>
+              </div>
               {(!fbLoading && rewrites.length > 0) && (
                 <div className="mt-4">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Suggested Bullet Rewrites</span>
@@ -307,6 +368,7 @@ export default function AnalysisPage() {
                           <p className="text-sm flex-1">{r.improved}</p>
                           <button onClick={() => navigator.clipboard.writeText(r.improved)} className="px-2 py-1 border border-outline-variant rounded text-[12px] font-bold">Copy</button>
                         </div>
+                        {r.rationale && <p className="mt-2 text-[12px] text-on-surface-variant">Why: {r.rationale}</p>}
                       </div>
                     ))}
                   </div>
@@ -347,7 +409,42 @@ export default function AnalysisPage() {
                 {/* Analysis Summary */}
                 <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Analysis Summary</span>
-                  <p className="mt-2 text-sm text-on-surface-variant whitespace-pre-wrap">{result.narrative || 'This resume shows partial alignment with the role based on explicit skill overlap.'}</p>
+                  {/* Overview */}
+                  <div className="mt-2">
+                    <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Overview</span>
+                    <p className="mt-1 text-sm text-on-surface-variant whitespace-pre-wrap">{result.narrative || 'This resume shows partial alignment with the role based on explicit skill overlap.'}</p>
+                  </div>
+                  {/* Matched / Missing quick chips */}
+                  <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Matched Highlights</span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {result.matched_skills.length ? result.matched_skills.slice(0,6).map((s) => (
+                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{s}</span>
+                        )) : <span className="text-sm text-on-surface-variant">None</span>}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Missing / Weak Areas</span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {result.missing_skills.length ? result.missing_skills.slice(0,6).map((s) => (
+                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-error/10 border border-error/20 text-error">{s}</span>
+                        )) : <span className="text-sm text-on-surface-variant">None</span>}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Action steps preview (subset of suggestions) */}
+                  <div className="mt-4">
+                    <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Action Steps (Preview)</span>
+                    <ul className="mt-2 space-y-1 list-disc list-inside text-sm text-on-surface-variant">
+                      {(result.suggestions || []).slice(0,2).map((tip, i) => (
+                        <li key={i}>{tip}</li>
+                      ))}
+                      {(!result.suggestions || result.suggestions.length === 0) && (
+                        <li className="text-on-surface-variant">Tailor the summary to highlight the most relevant skills and quantify impact.</li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
 
                 {/* Suggestions */}

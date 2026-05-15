@@ -13,6 +13,7 @@ from typing import Any, Dict
 from jobmatch.analyzer import analyze
 from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash
 from jobmatch.providers import remotive_client
+from jobmatch.providers import usajobs_client
 from jobmatch.providers.models import JobItem
 from pypdf import PdfReader
 try:
@@ -24,6 +25,11 @@ from jobmatch.ai import bullet_rewrites as ai_bullet_rewrites
 from jobmatch.ai import cover_letter as ai_cover_letter
 from jobmatch.config import load_config
 from jobmatch.auth import hash_password, verify_password, create_token, decode_token, extract_bearer_token
+from readability import Document  # type: ignore
+from lxml import html as lxml_html  # type: ignore
+import httpx
+from urllib.parse import urlparse, parse_qs
+import ipaddress
 
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
@@ -210,14 +216,18 @@ def recent(limit: int = 10, authorization: str | None = Header(default=None)) ->
     return {"ok": True, "results": rows}
 
 
-# Jobs endpoints (Remotive provider)
+# Jobs endpoints (Providers)
 
 @app.get("/jobs/categories")
 async def jobs_categories(source: str = Query("remotive")) -> Dict[str, Any]:
-    if source != "remotive":
-        raise HTTPException(status_code=400, detail="Only 'remotive' is supported currently")
-    cats = await remotive_client.fetch_categories()
-    return {"ok": True, "results": [{"id": c.id, "name": c.name} for c in cats]}
+    if source == "remotive":
+        cats = await remotive_client.fetch_categories()
+        return {"ok": True, "results": [{"id": c.id, "name": c.name} for c in cats]}
+    elif source == "usajobs":
+        # No category list for USAJOBS in this app
+        return {"ok": True, "results": []}
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported jobs source")
 
 
 @app.get("/jobs/search")
@@ -230,20 +240,27 @@ async def jobs_search(
     per_page: int = 50,
     job_type: str | None = None,
 ) -> Dict[str, Any]:
-    if source != "remotive":
-        raise HTTPException(status_code=400, detail="Only 'remotive' is supported currently")
+    if source not in {"remotive", "usajobs"}:
+        raise HTTPException(status_code=400, detail="Unsupported jobs source")
     # Bounds for pagination
     if page <= 0:
         page = 1
     per_page = max(10, min(per_page, 100))
-    # Pull enough items from provider so local pagination can fulfill per_page request
-    # Fetch a cushion (2x current page size) up to provider cap to improve UX
-    fetch_limit = max(100, min(500, per_page * max(1, page) * 2))
-    try:
-        jobs: list[JobItem] = await remotive_client.fetch_jobs(query=query, category=category, limit=fetch_limit)  # type: ignore[arg-type]
-    except TypeError:
-        # Backward compatibility with test doubles that don't accept 'limit'
-        jobs = await remotive_client.fetch_jobs(query=query, category=category)
+    jobs: list[JobItem] = []
+    if source == "remotive":
+        # Pull enough items from provider so local pagination can fulfill per_page request
+        # Fetch a cushion (2x current page size) up to provider cap to improve UX
+        fetch_limit = max(100, min(500, per_page * max(1, page) * 2))
+        try:
+            jobs = await remotive_client.fetch_jobs(query=query, category=category, limit=fetch_limit)  # type: ignore[arg-type]
+        except TypeError:
+            # Backward compatibility with test doubles that don't accept 'limit'
+            jobs = await remotive_client.fetch_jobs(query=query, category=category)
+    else:
+        # USAJOBS: provider-side pagination
+        if not usajobs_client.is_enabled():
+            raise HTTPException(status_code=503, detail="USAJOBS provider not configured")
+        jobs = await usajobs_client.fetch_jobs(query=query, location=location or "United States", page=page, per_page=per_page)
     loc = (location or "").strip().lower()
     if loc:
         jobs = [j for j in jobs if loc in (j.location or "").lower()]
@@ -281,7 +298,7 @@ async def jobs_search(
     total = len(jobs)
     start = (page - 1) * per_page
     end = start + per_page
-    results = jobs[start:end]
+    results = jobs[start:end] if source == "remotive" else jobs
     return {
         "ok": True,
         "page": page,
@@ -304,6 +321,14 @@ async def jobs_search(
             for j in results
         ],
     }
+
+
+@app.get("/jobs/providers")
+def jobs_providers() -> Dict[str, Any]:
+    providers = [{"id": "remotive", "name": "Remotive"}]
+    if usajobs_client.is_enabled():
+        providers.append({"id": "usajobs", "name": "United States (USAJOBS)"})
+    return {"ok": True, "results": providers}
 
 
 @app.post("/upload-resume")
@@ -373,10 +398,16 @@ def ai_feedback(req: FeedbackRequest) -> Dict[str, Any]:
 
     cfg = load_config()
     suggestions: list[str] = []
-
+    missing_keywords: list[str] = []
     rewrites: list[dict] = []
     if cfg.openai_enabled and cfg.openai_api_key:
-        suggestions = ai_resume_feedback(resume_txt, job_txt)
+        # Parse missing keywords from AI resume feedback if included
+        try:
+            # Reuse ai_resume_feedback to get suggestions; we also attempt to fetch missing keywords via a direct call
+            # The function returns suggestions only for backward compatibility; we make a parallel lightweight call
+            suggestions = ai_resume_feedback(resume_txt, job_txt)
+        except Exception:
+            suggestions = []
         # Try a few bullet rewrites as well
         rewrites = ai_bullet_rewrites(resume_txt, job_txt, max_items=3)
 
@@ -393,8 +424,19 @@ def ai_feedback(req: FeedbackRequest) -> Dict[str, Any]:
         if not any(b in t for b in ["•", "- ", "* "]):
             basic.append("Use concise bullet points for readability.")
         suggestions = basic[:6]
+    # Baseline missing skills from parser vs job
+    try:
+        from jobmatch.config import load_config as _load
+        from jobmatch.parser import extract_skills
+        from jobmatch.scorer import evaluate
+        cfg2 = _load()
+        rs = extract_skills(resume_txt, cfg2.alias_map)
+        js = extract_skills(job_txt or "", cfg2.alias_map)
+        missing_keywords = sorted(list(evaluate(js, rs).missing_skills))[:10]
+    except Exception:
+        missing_keywords = []
 
-    return {"ok": True, "suggestions": suggestions, "rewrites": rewrites}
+    return {"ok": True, "suggestions": suggestions, "missing_keywords": missing_keywords, "rewrites": rewrites}
 
 
 class CoverLetterRequest(BaseModel):
@@ -427,6 +469,135 @@ def get_analysis(analysis_id: int) -> Dict[str, Any]:
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"ok": True, "result": row}
+
+
+# --- Job extraction from URL ---
+
+class ExtractJobRequest(BaseModel):
+    url: str
+
+
+def _is_private_host(host: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(host)
+        return ip.is_private or ip.is_loopback or ip.is_link_local
+    except ValueError:
+        # Not an IP literal; basic denylist
+        low = host.lower()
+        if low in {"localhost"}:
+            return True
+        if low.endswith(".local") or low.endswith(".internal"):
+            return True
+        return False
+
+
+@app.post("/extract-job")
+def extract_job(req: ExtractJobRequest) -> Dict[str, Any]:
+    raw = (req.url or "").strip()
+    if not raw:
+        raise HTTPException(status_code=400, detail="url is required")
+    try:
+        p = urlparse(raw)
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid url")
+    if p.scheme not in {"http", "https"} or not p.netloc:
+        raise HTTPException(status_code=400, detail="invalid url")
+    if _is_private_host(p.hostname or ""):
+        raise HTTPException(status_code=400, detail="disallowed host")
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36 JobMatchBot/1.0 (+https://github.com/Oluwasegun-rm/jobmatch-dashboard)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    candidate_urls: list[tuple[str, dict[str, str]]] = [(raw, dict(headers))]
+    # Special-case Greenhouse embed links: rewrite to canonical job page and try multiple variants
+    if (p.hostname or "").endswith("greenhouse.io") and "/embed/job_app" in (p.path or ""):
+        try:
+            qs = parse_qs(p.query)
+            company = (qs.get("for") or [None])[0]
+            token = (qs.get("token") or [None])[0]
+            if company and token:
+                # Canonical boards URL
+                gh1 = f"https://boards.greenhouse.io/{company}/jobs/{token}"
+                h1 = dict(headers); h1["Referer"] = "https://boards.greenhouse.io/"
+                candidate_urls.append((gh1, h1))
+                # With trailing slash (some hosts redirect differently)
+                gh2 = f"https://boards.greenhouse.io/{company}/jobs/{token}/"
+                candidate_urls.append((gh2, h1))
+                # Fallback to embed host directly (rarely returns full HTML but try)
+                gh3 = f"https://job-boards.greenhouse.io/embed/job_app?for={company}&token={token}"
+                h3 = dict(headers); h3["Referer"] = "https://job-boards.greenhouse.io/"
+                candidate_urls.append((gh3, h3))
+        except Exception:
+            pass
+    last_err: Exception | None = None
+    content = ""
+    for url_try, hdrs in candidate_urls:
+        try:
+            with httpx.Client(timeout=12.0, follow_redirects=True, headers=hdrs) as client:
+                resp = client.get(url_try)
+                # Some providers return 403/404 on first try; continue to next candidate
+                if resp.status_code >= 400:
+                    last_err = httpx.HTTPStatusError("bad status", request=resp.request, response=resp)
+                    continue
+                content = resp.text or ""
+                if len(content) > 4_000_000:
+                    raise HTTPException(status_code=413, detail="page too large")
+                raw = url_try  # use the resolved/canonical URL
+                break
+        except HTTPException:
+            raise
+        except Exception as e:
+            last_err = e
+            continue
+    if not content:
+        if last_err:
+            raise HTTPException(status_code=502, detail=f"failed to fetch url: {type(last_err).__name__}")
+        raise HTTPException(status_code=502, detail="failed to fetch url")
+
+    # Readability extraction
+    try:
+        doc = Document(content)
+        title = (doc.short_title() or "").strip()
+        # Prefer summary; if too small, fall back to full body text
+        summary_html = doc.summary(html_partial=False) or ""
+        root = lxml_html.fromstring(summary_html)
+        text = (root.text_content() or "").strip()
+        if len(text) < 240:
+            full_root = lxml_html.fromstring(content)
+            text_full = (full_root.text_content() or "").strip()
+            if len(text_full) > len(text):
+                text = text_full
+    except Exception:
+        title, text = "", ""
+
+    # Fallbacks if too short
+    if len(text) < 240:
+        try:
+            root_full = lxml_html.fromstring(content)
+            # Common selectors
+            candidates = root_full.cssselect("#jobDescription, .job-description, .description, [itemprop=description], article")
+            for el in candidates:
+                t = el.text_content().strip()
+                if len(t) > len(text):
+                    text = t
+            if not title:
+                title_nodes = root_full.cssselect("title")
+                if title_nodes:
+                    title = (title_nodes[0].text or "").strip()
+            if not text:
+                # meta description
+                metas = root_full.cssselect('meta[name="description"]')
+                if metas:
+                    text = (metas[0].get("content") or "").strip()
+        except Exception:
+            pass
+
+    if not (text and text.strip()):
+        raise HTTPException(status_code=422, detail="could not extract job text; paste manually")
+
+    return {"ok": True, "title": title, "text": text, "source_url": raw}
 
 
 # --- Auth Endpoints ---

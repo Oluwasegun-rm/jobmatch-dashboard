@@ -66,13 +66,13 @@ def enhance_with_openai(resume_text: str, job_text: str, vocab: List[str]) -> Di
     system = (
         "You are a precise resume–job matching assistant. Duties: (1) extract skills (proper‑case canonical names) from the "
         "resume and job using ONLY the provided vocabulary, (2) compute a conservative semantic match score (0–100) reflecting "
-        "alignment, (3) produce 3–4 clear, objective sentences (60–120 words total) explaining the match: name 2–3 overlapping "
-        "skills and 1–2 significant gaps, and give a brief guidance sentence. Avoid vague phrases; do not invent experience; no "
-        "bullet points or markdown. Scoring guidance: if there are few or no overlaps with the job’s required skills, keep the "
-        "score ≤ 40; for partial/adjacent overlap, 45–70 is typical; only output ≥ 90 for an almost perfect match across nearly all "
-        "key requirements. NEVER output 100 unless the resume clearly covers virtually all explicit requirements. Output strict JSON "
-        "only with keys: resume_skills (array of strings), job_skills (array of strings), semantic_score (int), suggestions (array of "
-        "strings), narrative (string). No text outside the JSON."
+        "alignment, (3) produce a detailed yet concise narrative (5–8 sentences, ~120–220 words) that: clearly states the match, "
+        "explicitly names 3–5 top overlapping skills, explicitly names 3–6 key missing or weak areas by their exact names, and "
+        "gives 1–2 concrete steps to close gaps (e.g., add a brief project or quantify related experience). Avoid vague phrases; do "
+        "not invent experience; no bullet points or markdown. Scoring guidance: if there are few/no overlaps, keep the score ≤ 40; "
+        "45–70 for partial/adjacent overlap; ≥ 90 only for near‑perfect alignment across most explicit requirements; NEVER 100 "
+        "unless virtually all explicit requirements are covered. Output strict JSON only with keys: resume_skills (array of strings), "
+        "job_skills (array of strings), semantic_score (int), suggestions (array of strings), narrative (string). No text outside the JSON."
     )
     # Truncate very long inputs to keep token usage in check
     def _trunc(s: str, limit: int = 12000) -> str:
@@ -102,8 +102,8 @@ def enhance_with_openai(resume_text: str, job_text: str, vocab: List[str]) -> Di
                 messages=messages,
                 response_format={"type": "json_object"},
                 temperature=0.2,
-                max_tokens=800,
-            )
+            max_tokens=1000,
+        )
             content = resp.choices[0].message.content or "{}"
             data = _extract_json(content)
             out: Dict[str, Any] = {}
@@ -259,11 +259,15 @@ def resume_feedback(resume_text: str, job_text: str | None = None) -> List[str]:
 
     client = OpenAI(api_key=cfg.openai_api_key)
     sys = (
-        "You are a resume coach. Provide 3-6 concise, actionable suggestions to improve a resume. "
-        "Prefer strong action verbs, quantification, clarity, and relevance to the target job if provided. "
-        "Output strict JSON: {\"suggestions\": [string, ...]} with no extra commentary."
+        "You are a resume coach. Return concrete, job-aware feedback in strict JSON. "
+        "Structure: {\"suggestions\": [string...], \"missing_keywords\": [string...]} . "
+        "Guidelines: (1) 4–8 suggestions that reference missing or weak areas by name; prefer action verbs and quantification; "
+        "(2) missing_keywords: up to 10 high-signal skills/keywords explicitly present in the job text but absent or unclear in the resume; proper case. "
+        "No markdown, no commentary outside JSON."
     )
-    user = f"Resume:\n{resume_text}\n\n" + (f"Job Description (optional):\n{jt}\n" if jt else "")
+    user = (
+        "Resume (full text):\n" + resume_text + "\n\n" + ("Job (full text):\n" + jt + "\n" if jt else "")
+    )
     try:
         resp = client.chat.completions.create(
             model=cfg.openai_model,
@@ -273,13 +277,15 @@ def resume_feedback(resume_text: str, job_text: str | None = None) -> List[str]:
             ],
             response_format={"type": "json_object"},
             temperature=0.3,
-            max_tokens=300,
+            max_tokens=500,
         )
         content = resp.choices[0].message.content or "{}"
         data = json.loads(content)
+        out: List[str] = []
         if isinstance(data.get("suggestions"), list):
-            return [str(x) for x in data["suggestions"]][:8]
-        return []
+            out = [str(x) for x in data["suggestions"]][:8]
+        # We keep returning suggestions list for backward-compat; /ai/feedback will read missing_keywords separately
+        return out
     except Exception:
         return []
 
@@ -315,8 +321,8 @@ def bullet_rewrites(resume_text: str, job_text: str | None = None, max_items: in
     try:
         client = OpenAI(api_key=cfg.openai_api_key)
         sys = (
-            "Rewrite the provided resume bullet lines to be concise, start with strong action verbs, and include metrics where plausible. "
-            "Do not fabricate specifics beyond general quantification. Output strict JSON: {\"rewrites\": [{\"original\": str, \"improved\": str}, ...]}"
+            "Rewrite the provided resume bullet lines to be concise, action-first, and quantified when plausible. "
+            "Do not invent facts. Return strict JSON: {\"rewrites\": [{\"original\": str, \"improved\": str, \"rationale\": str}, ...]}"
         )
         user = "Bullets to rewrite:\n" + "\n".join(f"- {b}" for b in cand)
         if job_text:
@@ -336,7 +342,7 @@ def bullet_rewrites(resume_text: str, job_text: str | None = None, max_items: in
         out: List[Dict[str, str]] = []
         for item in data.get("rewrites", [])[:max_items]:
             if isinstance(item, dict) and item.get("original") and item.get("improved"):
-                out.append({"original": str(item["original"]), "improved": str(item["improved"])})
+                out.append({"original": str(item["original"]), "improved": str(item["improved"]), "rationale": str(item.get("rationale") or "")})
         return out
     except Exception:
         return []
