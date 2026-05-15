@@ -62,7 +62,7 @@ export default function TopNav() {
         <Link href="/" className="flex items-center gap-2" aria-label="JobMatch AI Home">
           {logoOk ? (
             <Image
-              src="/logo.svg"
+              src="/logo-v2.svg"
               alt="JobMatch AI"
               width={256}
               height={64}
