@@ -51,15 +51,22 @@ def _build_narrative(score: int, matched: Set[str], missing: Set[str]) -> str:
     matched_list = sorted(list(matched))
     missing_list = sorted(list(missing))
     top_matched = ", ".join(matched_list[:5]) or "none"
-    top_missing = ", ".join(missing_list[:5]) or "none"
+    top_missing = ", ".join(missing_list[:6]) or "none"
+    total_req = len(matched | missing) or len(matched_list) + len(missing_list)
     parts: List[str] = []
-    parts.append(f"The resume aligns with the role at {score}% based on explicit skill overlap and stated requirements.")
-    parts.append(f"Strengths include {top_matched}, indicating relevant hands-on experience in key areas.")
-    if top_missing != "none":
-        parts.append(f"Notable gaps are {top_missing}; addressing or framing adjacent experience here would strengthen fit.")
+    parts.append(f"Overall alignment is {score}% based on explicit keyword overlap against stated requirements.")
+    if matched_list:
+        parts.append(f"Matched highlights: {top_matched}. This indicates relevant exposure to key technologies/competencies.")
     else:
-        parts.append("There are no obvious missing skills from the stated requirements.")
-    parts.append("Prioritize the most relevant achievements near the top and quantify outcomes to reinforce impact.")
+        parts.append("No explicit overlaps were detected with the stated requirements.")
+    if missing_list:
+        parts.append(f"Missing/weak areas: {top_missing}. Add brief, verifiable evidence (projects, bullets, or quantified outcomes) to close these gaps.")
+    else:
+        parts.append("No obvious missing skills are called out by the job posting.")
+    if total_req:
+        parts.append("Place the most relevant items near the top of the resume, and quantify impact (%, $, #) to strengthen the narrative.")
+    else:
+        parts.append("Tailor the resume summary to the role and quantify a few key outcomes to create a stronger first impression.")
     return " ".join(parts)
 
 
@@ -93,12 +100,16 @@ def analyze(resume_text: str, job_text: str) -> AnalysisResult:
         merged_tips = tips + [t for t in ai_suggestions if t not in tips]
         # Prefer AI narrative if provided and sufficiently detailed; else fall back to structured baseline
         narrative_ai_raw = str(ai_out.get("narrative") or "").strip()
-        # Validate: require at least ~2 sentences and reasonable length
+        # Validate: require at least ~3 sentences and reasonable length
         sentences = [s for s in narrative_ai_raw.replace("\n", " ").split(".") if s.strip()]
-        if len(narrative_ai_raw) < 120 or len(sentences) < 2:
+        if len(narrative_ai_raw) < 180 or len(sentences) < 3:
             narrative_ai = _build_narrative(score, baseline.matched_skills, baseline.missing_skills)
         else:
             narrative_ai = narrative_ai_raw
+        # Always append a concise breakdown for clarity
+        detail_tail = _build_narrative(score, baseline.matched_skills, baseline.missing_skills)
+        if detail_tail not in narrative_ai:
+            narrative_ai = f"{narrative_ai} {detail_tail}"
         return AnalysisResult(
             score=score,
             resume_skills=resume_skills,
@@ -112,6 +123,8 @@ def analyze(resume_text: str, job_text: str) -> AnalysisResult:
         )
 
     # Baseline result when AI disabled/unavailable
+    # Baseline detailed narrative
+    detail = _build_narrative(baseline.score, baseline.matched_skills, baseline.missing_skills)
     return AnalysisResult(
         score=baseline.score,
         resume_skills=resume_skills,
@@ -119,7 +132,7 @@ def analyze(resume_text: str, job_text: str) -> AnalysisResult:
         matched_skills=baseline.matched_skills,
         missing_skills=baseline.missing_skills,
         suggestions=tips,
-        narrative=narrative,
+        narrative=f"{narrative} {detail}",
         ai_used=False,
         narrative_source="baseline",
     )
