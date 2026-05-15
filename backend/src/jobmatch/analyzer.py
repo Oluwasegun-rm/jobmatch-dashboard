@@ -7,6 +7,7 @@ from .config import load_config
 from .parser import extract_skills
 from .scorer import evaluate, ScoreResult
 from .ai import enhance_with_openai
+import re
 
 
 @dataclass(frozen=True)
@@ -70,8 +71,71 @@ def _build_narrative(score: int, matched: Set[str], missing: Set[str]) -> str:
 
 def analyze(resume_text: str, job_text: str) -> AnalysisResult:
     cfg = load_config()
-    resume_skills = extract_skills(resume_text, cfg.alias_map)
-    job_skills = extract_skills(job_text, cfg.alias_map)
+
+    # Build a dynamic alias map that augments the configured vocabulary with
+    # candidates derived from the job description text. This lets us capture
+    # stack- and library-specific tokens like "Node.js", "C#", ".NET", "Kubernetes",
+    # or acronyms that aren't in the default list, without hardcoding every skill.
+    alias_map = dict(cfg.alias_map)
+
+    def _norm(s: str) -> str:
+        # Normalize similar to parser.normalize_text: lower + hyphens to spaces
+        return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", s.lower().replace("-", " ")).strip())
+
+    STOP = {
+        # lightweight stoplist to avoid common false positives
+        "and", "or", "with", "the", "a", "an", "of", "for", "to", "in", "on", "by",
+        "this", "that", "these", "those", "you", "your", "we", "our", "at",
+        "intern", "internship", "engineer", "engineering", "developer", "software",
+        "saas", "applications", "application", "team", "product", "role", "experience",
+        "years", "year", "work", "ability", "strong", "excellent", "knowledge",
+        "tools", "technologies", "tech", "stack", "system", "systems", "service", "services",
+        "document", "documents", "company", "customers", "users", "platform",
+    }
+
+    def _dynamic_tokens(text: str, limit: int = 200) -> set[str]:
+        cand: set[str] = set()
+        # 1) tokens with special chars typical in tech names
+        for m in re.finditer(r"\b[\w]+(?:[.#\-/][\w]+)+\b", text, re.IGNORECASE):
+            cand.add(m.group(0))
+        # 2) acronyms (2-6 uppercase letters)
+        for m in re.finditer(r"\b[A-Z]{2,6}\b", text):
+            cand.add(m.group(0))
+        # 3) Title-case words likely to be technologies (avoid short common English)
+        for m in re.finditer(r"\b[A-Z][a-z]{2,}\b", text):
+            w = m.group(0)
+            if w.lower() not in STOP:
+                cand.add(w)
+        # 4) Keep it bounded and mapped to normalized tokens
+        toks: set[str] = set()
+        for raw in cand:
+            n = _norm(raw)
+            if not n or len(n) < 2:
+                continue
+            if n in STOP:
+                continue
+            # Avoid overly generic tokens
+            if n in {"data", "cloud", "server", "client", "api", "web", "mobile"}:
+                continue
+            toks.add(n)
+            if len(toks) >= limit:
+                break
+        return toks
+
+    def _canon(n: str) -> str:
+        # Canonical display: for short acronyms, uppercase; else title case per token
+        if re.fullmatch(r"[a-z]{2,6}", n) and n.isalpha():
+            return n.upper()
+        return " ".join([t.upper() if len(t) <= 3 and t.isalpha() else t.capitalize() for t in n.split()])
+
+    dyn = _dynamic_tokens(job_text)
+    for n in dyn:
+        # Only add if not already known
+        if n not in alias_map:
+            alias_map[n] = _canon(n)
+
+    resume_skills = extract_skills(resume_text, alias_map)
+    job_skills = extract_skills(job_text, alias_map)
 
     baseline: ScoreResult = evaluate(job_skills, resume_skills)
     tips = _suggestions(baseline.missing_skills, baseline.score)
