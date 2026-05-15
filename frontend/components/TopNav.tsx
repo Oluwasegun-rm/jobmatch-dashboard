@@ -64,9 +64,9 @@ export default function TopNav() {
             <Image
               src="/logo.png"
               alt="JobMatch AI"
-              width={128}
-              height={32}
-              className="h-8 w-auto object-contain"
+              width={192}
+              height={48}
+              className="h-12 w-auto object-contain"
               priority
               onError={() => setLogoOk(false)}
             />
