@@ -28,7 +28,7 @@ from jobmatch.auth import hash_password, verify_password, create_token, decode_t
 from readability import Document  # type: ignore
 from lxml import html as lxml_html  # type: ignore
 import httpx
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import ipaddress
 
 
@@ -509,6 +509,19 @@ def extract_job(req: ExtractJobRequest) -> Dict[str, Any]:
         "User-Agent": "Mozilla/5.0 (compatible; JobMatchBot/1.0; +https://github.com/Oluwasegun-rm/jobmatch-dashboard)",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
+    # Special-case Greenhouse embed links: rewrite to canonical job page
+    if (p.hostname or "").endswith("greenhouse.io") and "/embed/job_app" in (p.path or ""):
+        try:
+            qs = parse_qs(p.query)
+            company = (qs.get("for") or [None])[0]
+            token = (qs.get("token") or [None])[0]
+            if company and token:
+                raw = f"https://boards.greenhouse.io/{company}/jobs/{token}"
+                p = urlparse(raw)
+                # Set a referer to reduce 404s on some hosts
+                headers["Referer"] = "https://boards.greenhouse.io/"
+        except Exception:
+            pass
     try:
         with httpx.Client(timeout=10.0, follow_redirects=True, headers=headers) as client:
             resp = client.get(raw)
