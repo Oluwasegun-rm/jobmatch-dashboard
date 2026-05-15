@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
@@ -57,9 +58,15 @@ export default function TopNav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
       <nav className="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[28px]">home</span>
-          <span className="text-[18px] font-semibold tracking-tight text-primary">JobMatch AI</span>
+        <Link href="/" className="flex items-center gap-2" aria-label="JobMatch AI Home">
+          <Image
+            src="/logo.png"
+            alt="JobMatch AI"
+            width={128}
+            height={32}
+            className="h-8 w-auto object-contain"
+            priority
+          />
         </Link>
         <div className="hidden md:flex items-center gap-8">
           {links
