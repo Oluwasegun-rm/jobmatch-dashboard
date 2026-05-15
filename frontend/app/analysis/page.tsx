@@ -270,11 +270,25 @@ export default function AnalysisPage() {
                         }
                         setImporting(true)
                         try {
-                          const res = await fetch(`${API_BASE}/extract-job`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u }) })
-                          const data = await res.json()
-                          if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed to extract')
-                          setJob(String(data.text || ''))
-                          setJobMeta({ ...(jobMeta||{}), url: String(data.source_url||u), title: String(data.title||'') })
+                          // Try backend first
+                          let ok = false
+                          try {
+                            const res = await fetch(`${API_BASE}/extract-job`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u }) })
+                            const data = await res.json()
+                            if (res.ok && data?.ok) {
+                              setJob(String(data.text || ''))
+                              setJobMeta({ ...(jobMeta||{}), url: String(data.source_url||u), title: String(data.title||'') })
+                              ok = true
+                            }
+                          } catch {}
+                          if (!ok) {
+                            // Fallback to Next.js API route using TS Readability
+                            const res2 = await fetch(`/api/extract`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u }) })
+                            const data2 = await res2.json()
+                            if (!res2.ok || !data2?.ok) throw new Error(data2?.detail || 'Failed to extract')
+                            setJob(String(data2.text || ''))
+                            setJobMeta({ ...(jobMeta||{}), url: String(data2.source_url||u), title: String(data2.title||'') })
+                          }
                           setToastMsg('Imported job description from link.')
                           setUndoOpen(true)
                         } catch(e:any) {
