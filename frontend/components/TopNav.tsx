@@ -17,6 +17,7 @@ export default function TopNav() {
   const pathname = usePathname() || "/"
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [hasToken, setHasToken] = useState<boolean>(false)
+  const [logoOk, setLogoOk] = useState<boolean>(true)
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
   useEffect(() => {
     try {
@@ -59,14 +60,19 @@ export default function TopNav() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
       <nav className="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
         <Link href="/" className="flex items-center gap-2" aria-label="JobMatch AI Home">
-          <Image
-            src="/logo.png"
-            alt="JobMatch AI"
-            width={128}
-            height={32}
-            className="h-8 w-auto object-contain"
-            priority
-          />
+          {logoOk ? (
+            <Image
+              src="/logo.png"
+              alt="JobMatch AI"
+              width={128}
+              height={32}
+              className="h-8 w-auto object-contain"
+              priority
+              onError={() => setLogoOk(false)}
+            />
+          ) : (
+            <span className="text-[18px] font-semibold tracking-tight text-primary">JobMatch AI</span>
+          )}
         </Link>
         <div className="hidden md:flex items-center gap-8">
           {links
