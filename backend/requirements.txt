@@ -12,3 +12,4 @@ pypdf>=3.0.0
 python-docx>=1.0.0
 openai>=1.30.0
 PyJWT>=2.9.0
+readability-lxml>=0.8.1

@@ -31,6 +31,8 @@ export default function AnalysisPage() {
   const [history, setHistory] = useState<RecentItem[]>([])
   const [jobMeta, setJobMeta] = useState<JobMeta | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [jobUrl, setJobUrl] = useState('')
+  const [importing, setImporting] = useState(false)
   const [fbLoading, setFbLoading] = useState(false)
   const [feedback, setFeedback] = useState<string[]>([])
   const [rewrites, setRewrites] = useState<{original:string; improved:string; rationale?: string}[]>([])
@@ -252,6 +254,37 @@ export default function AnalysisPage() {
                   Workspace
                 </h2>
                 <div className="flex items-center gap-2">
+                  <div className="hidden md:flex items-center gap-2">
+                    <input
+                      value={jobUrl}
+                      onChange={(e)=>setJobUrl(e.target.value)}
+                      className="w-72 p-2 border border-outline-variant rounded-lg text-sm"
+                      placeholder="Paste job link…"
+                    />
+                    <button
+                      onClick={async ()=>{
+                        const u = jobUrl.trim(); if (!u) return;
+                        if (job.trim()) {
+                          const ok = window.confirm('Replace current job description with extracted text?')
+                          if (!ok) return
+                        }
+                        setImporting(true)
+                        try {
+                          const res = await fetch(`${API_BASE}/extract-job`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u }) })
+                          const data = await res.json()
+                          if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed to extract')
+                          setJob(String(data.text || ''))
+                          setJobMeta({ ...(jobMeta||{}), url: String(data.source_url||u), title: String(data.title||'') })
+                          setToastMsg('Imported job description from link.')
+                          setUndoOpen(true)
+                        } catch(e:any) {
+                          alert(e?.message || 'Failed to import job text. Paste manually.')
+                        } finally { setImporting(false) }
+                      }}
+                      disabled={importing}
+                      className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-surface-container-low"
+                    >{importing ? 'Importing…' : 'Import'}</button>
+                  </div>
                   <input id="resume-file" type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0]
                     if (f) onUploadResume(f)

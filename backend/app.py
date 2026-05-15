@@ -25,6 +25,11 @@ from jobmatch.ai import bullet_rewrites as ai_bullet_rewrites
 from jobmatch.ai import cover_letter as ai_cover_letter
 from jobmatch.config import load_config
 from jobmatch.auth import hash_password, verify_password, create_token, decode_token, extract_bearer_token
+from readability import Document  # type: ignore
+from lxml import html as lxml_html  # type: ignore
+import httpx
+from urllib.parse import urlparse
+import ipaddress
 
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
@@ -464,6 +469,94 @@ def get_analysis(analysis_id: int) -> Dict[str, Any]:
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"ok": True, "result": row}
+
+
+# --- Job extraction from URL ---
+
+class ExtractJobRequest(BaseModel):
+    url: str
+
+
+def _is_private_host(host: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(host)
+        return ip.is_private or ip.is_loopback or ip.is_link_local
+    except ValueError:
+        # Not an IP literal; basic denylist
+        low = host.lower()
+        if low in {"localhost"}:
+            return True
+        if low.endswith(".local") or low.endswith(".internal"):
+            return True
+        return False
+
+
+@app.post("/extract-job")
+def extract_job(req: ExtractJobRequest) -> Dict[str, Any]:
+    raw = (req.url or "").strip()
+    if not raw:
+        raise HTTPException(status_code=400, detail="url is required")
+    try:
+        p = urlparse(raw)
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid url")
+    if p.scheme not in {"http", "https"} or not p.netloc:
+        raise HTTPException(status_code=400, detail="invalid url")
+    if _is_private_host(p.hostname or ""):
+        raise HTTPException(status_code=400, detail="disallowed host")
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; JobMatchBot/1.0; +https://github.com/Oluwasegun-rm/jobmatch-dashboard)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+    try:
+        with httpx.Client(timeout=10.0, follow_redirects=True, headers=headers) as client:
+            resp = client.get(raw)
+            resp.raise_for_status()
+            content = resp.text or ""
+            if len(content) > 4_000_000:
+                raise HTTPException(status_code=413, detail="page too large")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"failed to fetch url: {type(e).__name__}")
+
+    # Readability extraction
+    try:
+        doc = Document(content)
+        title = (doc.short_title() or "").strip()
+        summary_html = doc.summary(html_partial=False) or ""
+        root = lxml_html.fromstring(summary_html)
+        text = root.text_content().strip()
+    except Exception:
+        title, text = "", ""
+
+    # Fallbacks if too short
+    if len(text) < 240:
+        try:
+            root_full = lxml_html.fromstring(content)
+            # Common selectors
+            candidates = root_full.cssselect("#jobDescription, .job-description, .description, [itemprop=description], article")
+            for el in candidates:
+                t = el.text_content().strip()
+                if len(t) > len(text):
+                    text = t
+            if not title:
+                title_nodes = root_full.cssselect("title")
+                if title_nodes:
+                    title = (title_nodes[0].text or "").strip()
+            if not text:
+                # meta description
+                metas = root_full.cssselect('meta[name="description"]')
+                if metas:
+                    text = (metas[0].get("content") or "").strip()
+        except Exception:
+            pass
+
+    if not (text and text.strip()):
+        raise HTTPException(status_code=422, detail="could not extract job text; paste manually")
+
+    return {"ok": True, "title": title, "text": text, "source_url": raw}
 
 
 # --- Auth Endpoints ---
