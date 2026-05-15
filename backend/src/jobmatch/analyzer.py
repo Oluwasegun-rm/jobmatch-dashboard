@@ -61,8 +61,6 @@ def _build_narrative(score: int, matched: Set[str], missing: Set[str]) -> str:
         parts.append("No explicit overlaps were detected with the stated requirements.")
     if missing_list:
         parts.append(f"Missing/weak areas: {top_missing}. Add brief, verifiable evidence (projects, bullets, or quantified outcomes) to close these gaps.")
-    else:
-        parts.append("No obvious missing skills are called out by the job posting.")
     if total_req:
         parts.append("Place the most relevant items near the top of the resume, and quantify impact (%, $, #) to strengthen the narrative.")
     else:
