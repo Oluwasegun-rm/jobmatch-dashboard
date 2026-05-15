@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import PageToolbar from '../../components/PageToolbar'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [me, setMe] = useState<{ id: number; username: string; display_name?: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,13 +26,18 @@ export default function SettingsPage() {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('jobmatch:token') : null
         if (!token) {
-          setError('Please sign in to manage your account.')
-          setLoading(false)
+          // No access for unauthenticated users — open auth modal on landing
+          router.replace('/?signin=1')
           return
         }
         const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
         const data = await res.json()
-        if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed to load account')
+        if (!res.ok || !data?.ok) {
+          // Clear any stale creds and redirect to sign in
+          try { localStorage.removeItem('jobmatch:token'); localStorage.removeItem('jobmatch:display_name'); } catch {}
+          router.replace('/?signin=1')
+          return
+        }
         const u = data.user as { id: number; username: string; display_name?: string }
         setMe(u)
         setNewDisplayName(u.display_name || u.username)
@@ -109,6 +116,15 @@ export default function SettingsPage() {
     }
   }
 
+  function signOut() {
+    try {
+      localStorage.removeItem('jobmatch:token')
+      localStorage.removeItem('jobmatch:display_name')
+      window.dispatchEvent(new CustomEvent('jobmatch:user-updated'))
+    } catch {}
+    router.replace('/')
+  }
+
   return (
     <div className="min-h-screen">
       <main className="min-h-screen">
@@ -132,6 +148,7 @@ export default function SettingsPage() {
                 </div>
                 <h2 className="text-headline-sm">{me.display_name || me.username}</h2>
                 <p className="text-on-surface-variant text-sm">Username: <span className="font-mono">{me.username}</span></p>
+                <button onClick={signOut} className="mt-4 px-4 py-2 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low">Sign out</button>
               </section>
 
               {/* Update Display Name */}
