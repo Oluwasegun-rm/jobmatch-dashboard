@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" fill="none">
+  <!-- Target icon (white strokes) -->
+  <g stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Concentric circles -->
+    <circle cx="90" cy="90" r="62" fill="none"/>
+    <circle cx="90" cy="90" r="45" fill="none"/>
+    <circle cx="90" cy="90" r="28" fill="none"/>
+    <circle cx="90" cy="90" r="11" fill="#FFFFFF"/>
+
+    <!-- Tripod stand -->
+    <line x1="60" y1="160" x2="45" y2="190"/>
+    <line x1="120" y1="160" x2="135" y2="190"/>
+    <line x1="90" y1="152" x2="90" y2="190"/>
+  </g>
+
+  <!-- Arrow 1 (lower) -->
+  <g stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="90" y1="90" x2="155" y2="42"/>
+    <!-- Fletching -->
+    <path d="M 150 38 L 162 30 L 168 42 Z" fill="#FFFFFF"/>
+    <path d="M 158 46 L 170 38 L 176 50 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Arrow 2 (upper) -->
+  <g stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="90" y1="90" x2="138" y2="28"/>
+    <!-- Fletching -->
+    <path d="M 134 24 L 146 16 L 152 28 Z" fill="#FFFFFF"/>
+    <path d="M 142 32 L 154 24 L 160 36 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Wordmark: Jobmatch Ai. (white) -->
+  <text x="210" y="125"
+        font-family="'Inter', 'Helvetica Neue', Arial, sans-serif"
+        font-size="92"
+        font-weight="800"
+        fill="#FFFFFF"
+        letter-spacing="-3">Jobmatch Ai</text>
+
+  <!-- Accent dot (kept blue for contrast) -->
+  <circle cx="745" cy="120" r="9" fill="#5BC7E0"/>
+</svg>

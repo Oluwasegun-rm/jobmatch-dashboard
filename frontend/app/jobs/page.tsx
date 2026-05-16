@@ -161,32 +161,32 @@ export default function JobsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setFavoritesOnly(false); setPage(1); onSearch(1, perPage) }}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${!favoritesOnly ? 'border-primary text-primary bg-primary-fixed/30' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${!favoritesOnly ? 'border-primary text-primary bg-primary-fixed/30 dark:text-neutral-100' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}
             >All</button>
             <button
               onClick={() => { setFavoritesOnly(true); setPage(1); onSearch(1, perPage) }}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${favoritesOnly ? 'border-primary text-primary bg-primary-fixed/30' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${favoritesOnly ? 'border-primary text-primary bg-primary-fixed/30 dark:text-neutral-100' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}
             >Favorites</button>
           </div>
         </PageToolbar>
         <div className="p-container-padding max-w-[1200px] mx-auto w-full space-y-6">
           {/* Controls */}
-          <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-            <div className="p-card-padding border-b border-outline-variant bg-surface-container-lowest">
+          <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden dark:bg-neutral-900 dark:border-neutral-800">
+            <div className="p-card-padding border-b border-outline-variant bg-surface-container-lowest dark:bg-neutral-900 dark:border-neutral-800">
               <span className="text-[12px] text-on-surface-variant uppercase font-bold">Search</span>
             </div>
             <div className="p-card-padding grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="col-span-2">
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Query</label>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="e.g., data analyst, machine learning" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400" placeholder="e.g., data analyst, machine learning" />
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Location</label>
-                <input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="e.g., USA, Europe" />
+                <input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400" placeholder="e.g., USA, Europe" />
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm">
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   <option value="">All</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -195,7 +195,7 @@ export default function JobsPage() {
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Job Type</label>
-                <select value={jobType} onChange={(e) => setJobType(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm">
+                <select value={jobType} onChange={(e) => setJobType(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   <option value="">All</option>
                   <option value="full_time">Full-time</option>
                   <option value="part_time">Part-time</option>
@@ -206,12 +206,12 @@ export default function JobsPage() {
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Source</label>
-                <select value={source} onChange={(e)=>{ setSource(e.target.value); setPage(1); onSearch(1, perPage) }} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm">
+                <select value={source} onChange={(e)=>{ setSource(e.target.value); setPage(1); onSearch(1, perPage) }} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                   {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
             </div>
-            <div className="p-card-padding bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+            <div className="p-card-padding bg-surface-container-low border-t border-outline-variant flex items-center justify-between dark:bg-neutral-900 dark:border-neutral-800">
               <div className="flex items-center gap-4">
                 {error && <p className="text-error text-sm">{error}</p>}
               </div>
@@ -222,7 +222,7 @@ export default function JobsPage() {
                   </button>
                   <div className="hidden md:flex items-center gap-2 text-sm">
                     <span className="text-on-surface-variant">Per page</span>
-                    <select value={perPage} onChange={(e)=>{ const pp = Number(e.target.value); setPerPage(pp); setPage(1); onSearch(1, pp) }} className="p-1 border border-outline-variant rounded">
+                    <select value={perPage} onChange={(e)=>{ const pp = Number(e.target.value); setPerPage(pp); setPage(1); onSearch(1, pp) }} className="p-1 border border-outline-variant rounded dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
                       {[25,50,75,100].map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
                   </div>
@@ -235,10 +235,10 @@ export default function JobsPage() {
             {loading && (
               <>
                 {[...Array(3)].map((_,i) => (
-                  <div key={i} className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 animate-pulse">
-                    <div className="h-4 w-40 bg-surface-container rounded mb-2" />
-                    <div className="h-3 w-60 bg-surface-container rounded mb-3" />
-                    <div className="h-3 w-full bg-surface-container rounded" />
+                  <div key={i} className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 animate-pulse dark:bg-neutral-900 dark:border-neutral-800">
+                    <div className="h-4 w-40 bg-surface-container rounded mb-2 dark:bg-neutral-800" />
+                    <div className="h-3 w-60 bg-surface-container rounded mb-3 dark:bg-neutral-800" />
+                    <div className="h-3 w-full bg-surface-container rounded dark:bg-neutral-800" />
                   </div>
                 ))}
               </>
@@ -246,34 +246,34 @@ export default function JobsPage() {
             {results
               .filter(j => !favoritesOnly || favs.has(j.id))
               .map((j) => (
-              <div key={j.id} className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 transition-all hover:shadow-md hover:border-primary/40" role="group" aria-label={`${j.title} at ${j.company}`}>
+              <div key={j.id} className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 transition-all hover:shadow-md hover:border-primary/40 dark:bg-neutral-900 dark:border-neutral-800" role="group" aria-label={`${j.title} at ${j.company}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="material-symbols-outlined text-primary">work</span>
-                      <h3 className="text-[16px] font-semibold truncate group-hover:underline">{j.title}</h3>
+                      <span className="material-symbols-outlined text-primary dark:text-neutral-100">work</span>
+                      <h3 className="text-[16px] font-semibold truncate group-hover:underline dark:text-neutral-100">{j.title}</h3>
                     </div>
-                    <p className="text-sm text-on-surface-variant truncate">{j.company} • {j.location}</p>
+                    <p className="text-sm text-on-surface-variant truncate dark:text-neutral-400">{j.company} • {j.location}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {j.job_type && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-surface-container-low">{j.job_type.replace('_',' ')}</span>}
-                      {j.salary && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-primary-fixed text-on-primary-container">{j.salary}</span>}
-                      <span className="text-[11px] text-on-surface-variant">{new Date(j.posted_at).toLocaleDateString()}</span>
+                      {j.job_type && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-surface-container-low dark:bg-neutral-800 dark:border-neutral-700">{j.job_type.replace('_',' ')}</span>}
+                      {j.salary && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-primary-fixed text-on-primary-container dark:border-neutral-700">{j.salary}</span>}
+                      <span className="text-[11px] text-on-surface-variant dark:text-neutral-400">{new Date(j.posted_at).toLocaleDateString()}</span>
                     </div>
-                    <p className="mt-2 text-sm text-on-surface-variant line-clamp-2">{stripHtml(j.description)}</p>
+                    <p className="mt-2 text-sm text-on-surface-variant line-clamp-2 dark:text-neutral-300">{stripHtml(j.description)}</p>
                     {j.tags && j.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {j.tags.slice(0,6).map((t) => (
-                          <span key={t} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{t}</span>
+                          <span key={t} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant dark:bg-neutral-800 dark:border-neutral-700">{t}</span>
                         ))}
                       </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => toggleFav(j.id)} title={favs.has(j.id) ? 'Unfavorite' : 'Favorite'} className={`px-2 py-1.5 rounded-lg text-sm font-bold border ${favs.has(j.id) ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'}`}>
+                    <button onClick={() => toggleFav(j.id)} title={favs.has(j.id) ? 'Unfavorite' : 'Favorite'} className={`px-2 py-1.5 rounded-lg text-sm font-bold border ${favs.has(j.id) ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
                       <span className="material-symbols-outlined">{favs.has(j.id) ? 'star' : 'star_rate'}</span>
                     </button>
-                    <button onClick={() => { setPreviewJob(j); setPreviewOpen(true) }} className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low">Preview</button>
-                    <a href={j.url} target="_blank" className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low">View</a>
+                    <button onClick={() => { setPreviewJob(j); setPreviewOpen(true) }} className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800">Preview</button>
+                    <a href={j.url} target="_blank" className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800">View</a>
                     <button onClick={() => useJob(j)} className="bg-primary text-on-primary px-3 py-1 rounded-lg text-sm font-bold">Use this job</button>
                   </div>
                 </div>
@@ -305,25 +305,25 @@ export default function JobsPage() {
           {previewOpen && previewJob && (
             <div className="fixed inset-0 z-50">
               <div className="absolute inset-0 bg-black/30" onClick={()=> setPreviewOpen(false)} />
-              <div className="absolute right-0 top-0 h-full w-full max-w-[720px] bg-white border-l border-outline-variant shadow-xl p-6 overflow-y-auto">
+              <div className="absolute right-0 top-0 h-full w-full max-w-[720px] bg-white border-l border-outline-variant shadow-xl p-6 overflow-y-auto dark:bg-neutral-900 dark:border-neutral-800">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <h3 className="text-[20px] font-semibold truncate">{previewJob.title}</h3>
-                    <p className="text-sm text-on-surface-variant truncate">{previewJob.company} • {previewJob.location}</p>
+                    <h3 className="text-[20px] font-semibold truncate dark:text-neutral-100">{previewJob.title}</h3>
+                    <p className="text-sm text-on-surface-variant truncate dark:text-neutral-400">{previewJob.company} • {previewJob.location}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {previewJob.job_type && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-surface-container-low">{previewJob.job_type.replace('_',' ')}</span>}
-                      {previewJob.salary && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-primary-fixed text-on-primary-container">{previewJob.salary}</span>}
-                      <span className="text-[11px] text-on-surface-variant">{new Date(previewJob.posted_at).toLocaleDateString()}</span>
+                      {previewJob.job_type && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-surface-container-low dark:bg-neutral-800 dark:border-neutral-700">{previewJob.job_type.replace('_',' ')}</span>}
+                      {previewJob.salary && <span className="px-2 py-0.5 text-[11px] rounded-full border border-outline-variant bg-primary-fixed text-on-primary-container dark:border-neutral-700">{previewJob.salary}</span>}
+                      <span className="text-[11px] text-on-surface-variant dark:text-neutral-400">{new Date(previewJob.posted_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <button className="text-on-surface-variant hover:text-primary" onClick={()=> setPreviewOpen(false)} title="Close">
+                  <button className="text-on-surface-variant hover:text-primary dark:text-neutral-300 hover:dark:text-neutral-100" onClick={()=> setPreviewOpen(false)} title="Close">
                     <span className="material-symbols-outlined">close</span>
                   </button>
                 </div>
                 {previewJob.tags && previewJob.tags.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {previewJob.tags.map((t) => (
-                      <span key={t} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{t}</span>
+                      <span key={t} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant dark:bg-neutral-800 dark:border-neutral-700">{t}</span>
                     ))}
                   </div>
                 )}
@@ -331,7 +331,7 @@ export default function JobsPage() {
                   <div dangerouslySetInnerHTML={{ __html: previewJob.description }} />
                 </div>
                 <div className="mt-6 flex items-center gap-2">
-                  <a href={previewJob.url} target="_blank" className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low">Open Original</a>
+                  <a href={previewJob.url} target="_blank" className="border border-outline-variant px-3 py-1 rounded-lg text-sm font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800">Open Original</a>
                   <button onClick={() => { useJob(previewJob); setPreviewOpen(false) }} className="bg-primary text-on-primary px-3 py-1 rounded-lg text-sm font-bold">Use this job</button>
                 </div>
               </div>
