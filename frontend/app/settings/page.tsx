@@ -205,19 +205,24 @@ export default function SettingsPage() {
               {/* Theme Selection */}
               <section className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 p-card-padding lg:col-span-3">
                 <h3 className="text-title-sm font-semibold mb-3">Appearance</h3>
-                <div className="flex flex-col sm:flex-row gap-3 items-center">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="theme" className="accent-current" checked={theme==='light'} onChange={()=>applyTheme('light')} />
-                    <span>Light</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="theme" className="accent-current" checked={theme==='dark'} onChange={()=>applyTheme('dark')} />
-                    <span>Dark</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="theme" className="accent-current" checked={theme==='system'} onChange={()=>applyTheme('system')} />
-                    <span>System</span>
-                  </label>
+                {/* Segmented Control */}
+                <div role="group" aria-label="Theme selection" className="inline-flex rounded-lg border border-outline-variant overflow-hidden dark:border-neutral-700">
+                  {([['light','Light'],['dark','Dark'],['system','System']] as const).map(([val, label], idx) => {
+                    const active = theme === val
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={()=>applyTheme(val as 'light'|'dark'|'system')}
+                        className={`px-4 py-2 text-sm font-semibold transition-colors ${
+                          active
+                            ? 'bg-primary text-on-primary dark:bg-neutral-100 dark:text-neutral-900'
+                            : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                        } ${idx>0 ? 'border-l border-outline-variant dark:border-neutral-700' : ''}`}
+                      >{label}</button>
+                    )
+                  })}
                 </div>
               </section>
             </div>

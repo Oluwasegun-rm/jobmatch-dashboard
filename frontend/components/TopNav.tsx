@@ -84,7 +84,7 @@ export default function TopNav() {
               onError={() => setLogoOk(false)}
             />
           ) : (
-            <span className="text-[18px] font-semibold tracking-tight text-primary">JobMatch AI</span>
+            <span className="text-[18px] font-semibold tracking-tight text-primary dark:text-neutral-100">JobMatch AI</span>
           )}
         </Link>
         {/* Mobile menu toggle */}
@@ -109,21 +109,21 @@ export default function TopNav() {
                   href={l.href}
                   className={
                     active
-                      ? "font-medium text-primary border-b-2 border-primary py-1"
-                      : "font-medium text-on-surface-variant hover:text-primary"
+                      ? "font-medium text-primary border-b-2 border-primary py-1 dark:text-neutral-100 dark:border-neutral-100"
+                      : "font-medium text-on-surface-variant hover:text-primary dark:text-neutral-200 hover:dark:text-neutral-100"
                   }
                 >
                   {l.label}
                 </Link>
-            )
-          })}
+              )
+            })}
         </div>
         <div className="flex items-center gap-3">
-          <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">notifications</button>
+          <button className="material-symbols-outlined text-on-surface-variant hover:text-primary dark:text-neutral-200 hover:dark:text-neutral-100">notifications</button>
           {displayName ? (
             <Link href="/settings" aria-label="Open Settings" className="flex items-center gap-2 group">
-              <span className="text-sm font-semibold text-on-surface-variant hidden md:inline group-hover:text-primary">{displayName}</span>
-              <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center group-hover:border-primary cursor-pointer">
+              <span className="text-sm font-semibold text-on-surface-variant hidden md:inline group-hover:text-primary dark:text-neutral-100">{displayName}</span>
+              <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center group-hover:border-primary cursor-pointer dark:border-neutral-700">
                 <span className="text-primary text-[13px] font-bold">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
               </div>
             </Link>
@@ -138,7 +138,7 @@ export default function TopNav() {
                   }
                 } catch {}
               }}
-              className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low"
+              className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100"
             >Sign in</button>
           )}
         </div>
@@ -165,7 +165,7 @@ export default function TopNav() {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            <div className="h-px bg-outline-variant/60" />
+            <div className="h-px bg-outline-variant/60 dark:bg-neutral-800" />
             <nav className="flex flex-col">
               {links
                 .filter(l => !(l as any).private || hasToken)

@@ -595,7 +595,7 @@ function CoverLetterCard({ resume, job }: { resume: string; job: string }) {
     navigator.clipboard.writeText(text)
   }
   return (
-    <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+    <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm dark:bg-neutral-900 dark:border-neutral-800">
       <div className="flex items-center justify-between">
         <span className="text-[12px] text-on-surface-variant uppercase font-bold">Cover Letter</span>
         <div className="flex gap-2">

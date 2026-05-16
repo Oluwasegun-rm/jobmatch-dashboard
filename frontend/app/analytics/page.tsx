@@ -114,30 +114,30 @@ export default function AnalyticsPage() {
 
           {/* Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-gutter">
-            <div className="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div className="bg-white border border-outline-variant rounded-lg p-card-padding dark:bg-neutral-900 dark:border-neutral-800">
               <div className="text-[12px] uppercase text-on-surface-variant">Total Analyses</div>
-              <div className="text-display-lg font-mono text-primary">{loading ? '—' : total}</div>
+              <div className="text-display-lg font-mono text-primary dark:text-neutral-100">{loading ? '—' : total}</div>
             </div>
-            <div className="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div className="bg-white border border-outline-variant rounded-lg p-card-padding dark:bg-neutral-900 dark:border-neutral-800">
               <div className="text-[12px] uppercase text-on-surface-variant">Avg. Match</div>
-              <div className="text-display-lg font-mono text-primary">{loading ? '—' : `${avgScore}%`}</div>
+              <div className="text-display-lg font-mono text-primary dark:text-neutral-100">{loading ? '—' : `${avgScore}%`}</div>
             </div>
-            <div className="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div className="bg-white border border-outline-variant rounded-lg p-card-padding dark:bg-neutral-900 dark:border-neutral-800">
               <div className="text-[12px] uppercase text-on-surface-variant">Best Score</div>
-              <div className="text-display-lg font-mono text-primary">{loading ? '—' : `${bestScore}%`}</div>
+              <div className="text-display-lg font-mono text-primary dark:text-neutral-100">{loading ? '—' : `${bestScore}%`}</div>
             </div>
-            <div className="bg-white border border-outline-variant rounded-lg p-card-padding">
+            <div className="bg-white border border-outline-variant rounded-lg p-card-padding dark:bg-neutral-900 dark:border-neutral-800">
               <div className="text-[12px] uppercase text-on-surface-variant">Analyses Last 7d</div>
-              <div className="text-display-lg font-mono text-primary">{loading ? '—' : last7Count}</div>
+              <div className="text-display-lg font-mono text-primary dark:text-neutral-100">{loading ? '—' : last7Count}</div>
             </div>
           </div>
 
           {/* Charts */}
           <div className="grid grid-cols-12 gap-gutter mb-gutter">
             {/* Match Trends */}
-            <div className="col-span-12 lg:col-span-8 bg-white border border-outline-variant rounded-lg p-card-padding min-h-[280px] flex flex-col">
+            <div className="col-span-12 lg:col-span-8 bg-white border border-outline-variant rounded-lg p-card-padding min-h-[280px] flex flex-col dark:bg-neutral-900 dark:border-neutral-800">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-title-sm font-semibold">Match Confidence Trends (7d)</h3>
+                <h3 className="text-title-sm font-semibold dark:text-neutral-100">Match Confidence Trends (7d)</h3>
               </div>
               <div className="flex-1 w-full relative">
                 <svg className="w-full h-48" viewBox="0 0 800 200" preserveAspectRatio="none">
@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
                   <line x1="0" y1="50" x2="800" y2="50" stroke="#f0edee" strokeWidth="1" />
                   <line x1="0" y1="100" x2="800" y2="100" stroke="#f0edee" strokeWidth="1" />
                   <line x1="0" y1="150" x2="800" y2="150" stroke="#f0edee" strokeWidth="1" />
-                  <path d={pathD} fill="none" stroke="#000000" strokeWidth="3" strokeLinecap="round" />
+                  <path d={pathD} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary dark:text-neutral-100" />
                 </svg>
                 <div className="flex justify-between mt-2 text-[10px] text-on-surface-variant">
                   {trend.labels.map((l, i) => (
@@ -156,17 +156,17 @@ export default function AnalyticsPage() {
             </div>
 
             {/* In-Demand Skills */}
-            <div className="col-span-12 lg:col-span-4 bg-white border border-outline-variant rounded-lg p-card-padding min-h-[280px]">
-              <h3 className="text-title-sm font-semibold mb-4">In-Demand Skills</h3>
+            <div className="col-span-12 lg:col-span-4 bg-white border border-outline-variant rounded-lg p-card-padding min-h-[280px] dark:bg-neutral-900 dark:border-neutral-800">
+              <h3 className="text-title-sm font-semibold mb-4 dark:text-neutral-100">In-Demand Skills</h3>
               <div className="space-y-4">
                 {topSkills.length === 0 && <p className="text-sm text-on-surface-variant">No data yet. Save some analyses.</p>}
                 {topSkills.map((s) => (
                   <div key={s.name} className="space-y-1.5">
                     <div className="flex justify-between text-sm">
-                      <span className="font-medium">{s.name}</span>
-                      <span className="text-on-surface-variant font-mono">{s.pct}%</span>
+                      <span className="font-medium dark:text-neutral-100">{s.name}</span>
+                      <span className="text-on-surface-variant font-mono dark:text-neutral-400">{s.pct}%</span>
                     </div>
-                    <div className="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-surface-container-low h-2 rounded-full overflow-hidden dark:bg-neutral-800">
                       <div className="bg-primary h-full rounded-full" style={{ width: `${s.pct}%` }} />
                     </div>
                   </div>
@@ -176,22 +176,22 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Recent table */}
-          <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-            <div className="p-card-padding border-b border-outline-variant flex justify-between items-center bg-surface-bright">
-              <h3 className="text-title-sm font-semibold">Recent Match Analyses</h3>
+          <div className="bg-white border border-outline-variant rounded-lg overflow-hidden dark:bg-neutral-900 dark:border-neutral-800">
+            <div className="p-card-padding border-b border-outline-variant flex justify-between items-center bg-surface-bright dark:bg-neutral-900 dark:border-neutral-800">
+              <h3 className="text-title-sm font-semibold dark:text-neutral-100">Recent Match Analyses</h3>
             </div>
-            <div className="divide-y divide-outline-variant">
+            <div className="divide-y divide-outline-variant dark:divide-neutral-800">
               {items.map((r) => (
                 <div key={r.id} className="px-6 py-4 flex items-center justify-between">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold truncate">{r.job_title ? `${r.job_title} – ${r.job_company ?? ''}` : `Analysis #${r.id}`}</p>
-                    <p className="text-[12px] text-on-surface-variant">{new Date(r.created_at).toLocaleString()}</p>
+                    <p className="text-sm font-bold truncate dark:text-neutral-100">{r.job_title ? `${r.job_title} – ${r.job_company ?? ''}` : `Analysis #${r.id}`}</p>
+                    <p className="text-[12px] text-on-surface-variant dark:text-neutral-400">{new Date(r.created_at).toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-12 h-1 bg-surface-container rounded-full overflow-hidden">
+                    <div className="w-12 h-1 bg-surface-container rounded-full overflow-hidden dark:bg-neutral-800">
                       <div className="h-full bg-primary" style={{ width: `${r.score}%` }} />
                     </div>
-                    <span className="text-sm font-mono text-primary">{r.score}%</span>
+                    <span className="text-sm font-mono text-primary dark:text-neutral-100">{r.score}%</span>
                   </div>
                 </div>
               ))}
