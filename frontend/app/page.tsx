@@ -1,7 +1,6 @@
 "use client"
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -76,13 +75,19 @@ function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
 export default function LandingPage() {
   const [authOpen, setAuthOpen] = useState(false)
   const [policyOpen, setPolicyOpen] = useState<null | 'privacy' | 'terms' | 'support'>(null)
+  const [isDark, setIsDark] = useState(false)
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search)
       if (params.get('signin') === '1') setAuthOpen(true)
       const openHandler = () => setAuthOpen(true)
       window.addEventListener('jobmatch:open-auth', openHandler as any)
-      return () => window.removeEventListener('jobmatch:open-auth', openHandler as any)
+      const el = document.documentElement
+      const update = () => setIsDark(el.classList.contains('dark'))
+      update()
+      const obs = new MutationObserver(update)
+      obs.observe(el, { attributes: true, attributeFilter: ['class'] })
+      return () => { window.removeEventListener('jobmatch:open-auth', openHandler as any); obs.disconnect() }
     } catch {}
   }, [])
   
@@ -148,8 +153,8 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <Link href="/analysis" className="bg-primary text-on-primary px-8 py-3 rounded-lg font-bold hover:opacity-90 active:scale-[0.98]">Analyze Resume</Link>
-              <Link href="/jobs" className="bg-surface border border-outline-variant text-primary px-8 py-3 rounded-lg font-bold hover:bg-surface-container-low">Browse Jobs</Link>
-              <button onClick={()=>setAuthOpen(true)} className="px-8 py-3 border border-outline-variant rounded-lg font-bold hover:bg-surface-container-low">Sign in</button>
+              <Link href="/jobs" className="bg-surface border border-outline-variant text-primary px-8 py-3 rounded-lg font-bold hover:bg-surface-container-low dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800">Browse Jobs</Link>
+              <button onClick={()=>setAuthOpen(true)} className="px-8 py-3 border border-outline-variant rounded-lg font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800">Sign in</button>
             </div>
           </div>
           <div className="flex-1 w-full max-w-2xl">
@@ -171,44 +176,44 @@ export default function LandingPage() {
             <p className="text-on-surface-variant dark:text-neutral-400">Three steps to optimize your professional presence.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-8 bg-white border border-outline-variant rounded-xl p-card-padding dark:bg-neutral-900 dark:border-neutral-800">
+            <div className="md:col-span-8 bg-primary-container text-on-primary rounded-xl p-card-padding border border-transparent">
               <div className="space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary-container flex items-center justify-center text-on-primary">
+                <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center text-on-primary">
                   <span className="material-symbols-outlined">troubleshoot</span>
                 </div>
-                <h3 className="text-headline-md text-primary dark:text-neutral-100">AI Match Scoring</h3>
-                <p className="text-on-surface-variant max-w-lg dark:text-neutral-300">We compute overlap between job-required and resume-present skills and surface actionable gaps.</p>
+                <h3 className="text-headline-md text-on-primary">AI Match Scoring</h3>
+                <p className="text-on-primary/90 max-w-lg">We compute overlap between job-required and resume-present skills and surface actionable gaps.</p>
               </div>
               <div className="mt-6 flex items-center gap-4">
-                <div className="px-4 py-2 bg-surface-container-high rounded-lg border border-outline-variant dark:bg-neutral-800 dark:border-neutral-700">
-                  <span className="font-mono text-primary font-bold dark:text-neutral-100">MATCH: 85%</span>
+                <div className="px-4 py-2 rounded-lg border bg-white/10 border-white/20">
+                  <span className="font-mono text-on-primary font-bold">MATCH: 85%</span>
                 </div>
-                <div className="flex-1 h-2 bg-surface-container rounded-full overflow-hidden dark:bg-neutral-800">
-                  <div className="h-full bg-primary w-[85%]" />
+                <div className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white w-[85%]" />
                 </div>
               </div>
             </div>
-            <div className="md:col-span-4 bg-white border border-outline-variant rounded-xl p-card-padding dark:bg-neutral-900 dark:border-neutral-800">
-              <div className="h-12 w-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary dark:bg-neutral-800 dark:text-neutral-100">
+            <div className="md:col-span-4 bg-primary-container text-on-primary rounded-xl p-card-padding border border-transparent">
+              <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center text-on-primary">
                 <span className="material-symbols-outlined">analytics</span>
               </div>
-              <h3 className="mt-4 text-headline-md text-primary dark:text-neutral-100">Skill Gap Analysis</h3>
+              <h3 className="mt-4 text-headline-md text-on-primary">Skill Gap Analysis</h3>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-center gap-2 text-error text-sm"><span className="material-symbols-outlined text-[16px]">close</span> Missing: Kubernetes</li>
-                <li className="flex items-center gap-2 text-on-surface-variant text-sm dark:text-neutral-300"><span className="material-symbols-outlined text-[16px]">check</span> Found: Terraform</li>
+                <li className="flex items-center gap-2 text-on-primary/90 text-sm"><span className="material-symbols-outlined text-[16px]">check</span> Found: Terraform</li>
               </ul>
             </div>
             {/* Real-time Resume Feedback (Stitch-style) */}
-            <div className="md:col-span-8 bg-surface-bright border border-outline-variant rounded-xl p-card-padding flex flex-col md:flex-row gap-8 items-center dark:bg-neutral-900 dark:border-neutral-800">
+            <div className="md:col-span-8 bg-primary-container text-on-primary border border-transparent rounded-xl p-card-padding flex flex-col md:flex-row gap-8 items-center">
               <div className="flex-1 space-y-3">
-                <h3 className="text-headline-md text-primary dark:text-neutral-100">Real-time Resume Feedback</h3>
-                <p className="text-on-surface-variant dark:text-neutral-300">Get instant coaching as you refine your resume. We suggest stronger verbs, quantify impact, and highlight clarity issues.</p>
+                <h3 className="text-headline-md text-on-primary">Real-time Resume Feedback</h3>
+                <p className="text-on-primary/90">Get instant coaching as you refine your resume. We suggest stronger verbs, quantify impact, and highlight clarity issues.</p>
               </div>
               <div className="w-full md:w-1/3">
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-outline-variant space-y-3 dark:bg-neutral-900 dark:border-neutral-800">
-                  <div className="h-2 w-3/4 bg-surface-container rounded-full dark:bg-neutral-800"></div>
-                  <div className="h-2 w-full bg-surface-container rounded-full dark:bg-neutral-800"></div>
-                  <div className="p-2 bg-primary-container/10 border-l-4 border-primary rounded dark:bg-neutral-800">
+                <div className="p-4 rounded-lg shadow-sm border space-y-3 bg-white/10 border-white/20">
+                  <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
+                  <div className="h-2 w-full bg-white/20 rounded-full"></div>
+                  <div className="p-2 bg-white/10 border-l-4 border-white rounded">
                     <p className="text-[10px] font-mono text-primary">AI SUGGESTION: Replace "responsible for" with "Spearheaded" and add a metric (+15%).</p>
                   </div>
                 </div>
@@ -232,20 +237,7 @@ export default function LandingPage() {
       </main>
       <AuthModal open={authOpen} onClose={()=>setAuthOpen(false)} />
 
-      <footer className="bg-surface-container dark:bg-neutral-900 py-12 border-t border-outline-variant dark:border-neutral-800">
-        <div className="max-w-[1600px] mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <Image src="/logo-v2.svg" alt="JobMatch AI" width={180} height={48} className="h-10 w-auto object-contain" />
-          </div>
-          <div className="flex gap-8 text-on-surface-variant text-sm dark:text-neutral-300">
-            <button className="hover:text-primary dark:hover:text-neutral-100" onClick={()=>setPolicyOpen('privacy')}>Privacy Policy</button>
-            <button className="hover:text-primary dark:hover:text-neutral-100" onClick={()=>setPolicyOpen('terms')}>Terms of Service</button>
-            <button className="hover:text-primary dark:hover:text-neutral-100" onClick={()=>setPolicyOpen('support')}>Contact Support</button>
-          </div>
-          <p className="text-on-surface-variant text-sm dark:text-neutral-400">© 2026 JobMatch AI. All rights reserved.</p>
-        </div>
-      </footer>
-      {policyOpen && <PolicyModal kind={policyOpen} onClose={()=>setPolicyOpen(null)} />}
+      {/* Global footer is rendered from layout; landing footer removed to avoid duplication */}
     </div>
   )
 }

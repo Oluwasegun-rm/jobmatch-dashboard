@@ -263,7 +263,7 @@ export default function AnalysisPage() {
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <div className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm overflow-hidden">
               <div className="p-card-padding border-b border-outline-variant dark:border-neutral-800 flex justify-between items-center bg-surface-container-lowest dark:bg-neutral-900">
-                <h2 className="text-[18px] font-semibold flex items-center gap-2">
+                <h2 className="text-[18px] font-semibold flex items-center gap-2 dark:text-neutral-100">
                   <span className="material-symbols-outlined text-primary">edit_note</span>
                   Workspace
                 </h2>
@@ -272,7 +272,7 @@ export default function AnalysisPage() {
                     <input
                       value={jobUrl}
                       onChange={(e)=>setJobUrl(e.target.value)}
-                      className="w-72 p-2 border border-outline-variant rounded-lg text-sm"
+                      className="w-72 p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400"
                       placeholder="Paste job link…"
                     />
                     <button
@@ -310,14 +310,14 @@ export default function AnalysisPage() {
                         } finally { setImporting(false) }
                       }}
                       disabled={importing}
-                      className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-surface-container-low"
+                      className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100"
                     >{importing ? 'Importing…' : 'Import'}</button>
                   </div>
                   <input id="resume-file" type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0]
                     if (f) onUploadResume(f)
                   }} />
-                  <label htmlFor="resume-file" className="flex items-center gap-2 text-sm font-semibold text-primary border border-outline-variant px-4 py-1.5 rounded-lg hover:bg-surface-container-low cursor-pointer">
+                  <label htmlFor="resume-file" className="flex items-center gap-2 text-sm font-semibold text-primary border border-outline-variant px-4 py-1.5 rounded-lg hover:bg-surface-container-low cursor-pointer dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100">
                     <span className="material-symbols-outlined text-[18px]">upload_file</span>
                     {uploading ? 'Uploading…' : 'Upload Resume'}
                   </label>
@@ -335,7 +335,7 @@ export default function AnalysisPage() {
                </div>
                <div className="p-card-padding bg-surface-container-low dark:bg-neutral-900 border-t border-outline-variant dark:border-neutral-800 flex items-center justify-between">
                 {error && <p className="text-error text-sm">{error}</p>}
-                <button onClick={onAnalyze} disabled={!canAnalyze || loading} className="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2">
+                <button onClick={onAnalyze} disabled={!canAnalyze || loading} className="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 dark:hover:opacity-90">
                   {loading ? 'Analyzing…' : 'Analyze Match'}
                   <span className="material-symbols-outlined">bolt</span>
                 </button>
@@ -364,7 +364,7 @@ export default function AnalysisPage() {
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Missing Keywords</span>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {missing.length ? missing.map((m)=> (
-                      <span key={m} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{m}</span>
+                      <span key={m} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">{m}</span>
                     )) : <span className="text-sm text-on-surface-variant">None</span>}
                   </div>
                 </div>
@@ -394,7 +394,7 @@ export default function AnalysisPage() {
             {result && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Score card */}
-                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center">
+                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center self-start">
                   <span className="text-[12px] text-on-surface-variant uppercase mb-2 font-bold">Overall Match</span>
                   <div className="text-5xl font-mono text-primary">{result.score}%</div>
                   <p className="text-sm text-on-surface-variant mt-2">{result.score >= 80 ? 'Strong Fit' : result.score >= 60 ? 'Good Fit' : 'Partial Fit'}</p>
@@ -402,19 +402,19 @@ export default function AnalysisPage() {
                 {/* Skills */}
                 <div className="md:col-span-2 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm">
                   <div className="flex flex-col md:flex-row md:items-start gap-6">
-                    <div className="flex-1">
+                    <div className="md:basis-1/3">
                       <p className="text-sm font-bold mb-2 flex items-center gap-1"><span className="material-symbols-outlined text-green-600">check_circle</span>Matched Skills</p>
                       <div className="flex flex-wrap gap-2">
                         {result.matched_skills.length ? result.matched_skills.map((s) => (
-                          <span key={s} className="px-3 py-1 bg-surface-container-low border border-outline-variant rounded-full text-sm">{s}</span>
+                          <span key={s} className="px-3 py-1 bg-surface-container-low border border-outline-variant rounded-full text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">{s}</span>
                         )) : <span className="text-sm text-on-surface-variant">None</span>}
                       </div>
                     </div>
-                    <div className="flex-1">
+                    <div className="md:basis-2/3">
                       <p className="text-sm font-bold mb-2 flex items-center gap-1 text-error"><span className="material-symbols-outlined">error</span>Missing Skills</p>
                       <div className="flex flex-wrap gap-2">
                         {result.missing_skills.length ? result.missing_skills.map((s) => (
-                          <span key={s} className="px-3 py-1 bg-error/10 border border-error/20 text-error rounded-full text-sm">{s}</span>
+                          <span key={s} className="px-3 py-1 bg-error/10 border border-error/20 text-error rounded-full text-sm dark:bg-neutral-900 dark:border-neutral-700">{s}</span>
                         )) : <span className="text-sm text-on-surface-variant">None</span>}
                       </div>
                     </div>
@@ -434,7 +434,7 @@ export default function AnalysisPage() {
                       <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Matched Highlights</span>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {result.matched_skills.length ? result.matched_skills.slice(0,6).map((s) => (
-                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant">{s}</span>
+                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-surface-container-low border border-outline-variant dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">{s}</span>
                         )) : <span className="text-sm text-on-surface-variant">None</span>}
                       </div>
                     </div>
@@ -442,7 +442,7 @@ export default function AnalysisPage() {
                       <span className="text-[12px] text-on-surface-variant uppercase font-semibold">Missing / Weak Areas</span>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {result.missing_skills.length ? result.missing_skills.slice(0,6).map((s) => (
-                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-error/10 border border-error/20 text-error">{s}</span>
+                          <span key={s} className="px-2 py-0.5 text-[11px] rounded-full bg-error/10 border border-error/20 text-error dark:bg-neutral-900 dark:border-neutral-700">{s}</span>
                         )) : <span className="text-sm text-on-surface-variant">None</span>}
                       </div>
                     </div>
@@ -475,7 +475,7 @@ export default function AnalysisPage() {
                     ))}
                   </ul>
                   <div className="mt-4">
-                    <button onClick={onSave} className="border border-outline-variant px-4 py-2 rounded-lg text-sm font-bold hover:bg-surface-container-low">Save Result</button>
+                  <button onClick={onSave} className="border border-outline-variant px-4 py-2 rounded-lg text-sm font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100">Save Result</button>
                   </div>
                 </div>
 
@@ -489,7 +489,7 @@ export default function AnalysisPage() {
           <div className="col-span-12 lg:col-span-4 space-y-6">
             <div className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col min-h-[300px]">
               <div className="p-card-padding border-b border-outline-variant dark:border-neutral-800 flex items-center justify-between">
-                <h3 className="text-[18px] font-bold flex items-center gap-2">
+                <h3 className="text-[18px] font-bold flex items-center gap-2 dark:text-neutral-100">
                   <span className="material-symbols-outlined text-on-surface-variant">history</span>
                   Analysis History
                 </h3>
@@ -507,7 +507,7 @@ export default function AnalysisPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`text-[11px] font-bold ${h.score >= 80 ? 'text-green-600' : h.score >= 60 ? 'text-on-surface-variant' : 'text-error'}`}>{h.score}%</span>
                           <button
-                            className="px-2 py-1 border border-outline-variant rounded text-[12px] font-bold hover:bg-surface-container-low"
+                            className="px-2 py-1 border border-outline-variant rounded text-[12px] font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100"
                             title="Duplicate analysis"
                               onClick={async (e) => {
                                 e.stopPropagation();
@@ -556,11 +556,11 @@ export default function AnalysisPage() {
       </main>
       {/* Undo Toast */}
       {undoOpen && (
-        <div className="fixed bottom-4 right-4 bg-surface border border-outline-variant shadow-lg rounded-lg p-4 flex items-center gap-3">
+        <div className="fixed bottom-4 right-4 bg-surface border border-outline-variant shadow-lg rounded-lg p-4 flex items-center gap-3 dark:bg-neutral-900 dark:border-neutral-800">
           <span className="text-sm">{toastMsg || 'Saved.'}</span>
           <button
             onClick={async () => { setUndoOpen(false); setResume(prevResume); setJob(prevJob); await computeAnalysis(prevResume, prevJob) }}
-            className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low"
+            className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100"
           >Undo</button>
           <button onClick={()=> setUndoOpen(false)} className="text-on-surface-variant text-sm hover:underline">Dismiss</button>
         </div>

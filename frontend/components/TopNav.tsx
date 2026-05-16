@@ -19,6 +19,7 @@ export default function TopNav() {
   const [hasToken, setHasToken] = useState<boolean>(false)
   const [logoOk, setLogoOk] = useState<boolean>(true)
   const [mobileOpen, setMobileOpen] = useState<boolean>(false)
+  const [isDark, setIsDark] = useState<boolean>(false)
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
   useEffect(() => {
     try {
@@ -69,17 +70,30 @@ export default function TopNav() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Track theme for logo swap (white logo on dark)
+  useEffect(() => {
+    try {
+      const el = document.documentElement
+      const update = () => setIsDark(el.classList.contains('dark'))
+      update()
+      const obs = new MutationObserver(update)
+      obs.observe(el, { attributes: true, attributeFilter: ['class'] })
+      window.addEventListener('jobmatch:theme-apply', update as any)
+      return () => { obs.disconnect(); window.removeEventListener('jobmatch:theme-apply', update as any) }
+    } catch {}
+  }, [])
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant dark:bg-neutral-900/80 dark:border-neutral-800">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background dark:bg-neutral-950">
       <nav className="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
         <Link href="/" className="flex items-center gap-2" aria-label="JobMatch AI Home">
           {logoOk ? (
             <Image
-              src="/logo-v2.svg"
+              src={isDark ? "/logo-v2-white.svg" : "/logo-v2.svg"}
               alt="JobMatch AI"
-              width={256}
-              height={64}
-              className="h-14 w-auto object-contain"
+              width={200}
+              height={50}
+              className="h-12 w-auto object-contain"
               priority
               onError={() => setLogoOk(false)}
             />
@@ -90,7 +104,7 @@ export default function TopNav() {
         {/* Mobile menu toggle */}
         <button
           type="button"
-          className="md:hidden p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low"
+          className="md:hidden p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low dark:hover:bg-neutral-800 dark:text-neutral-200 hover:dark:text-neutral-100"
           aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
           aria-expanded={mobileOpen}
           aria-controls="mobile-menu"
@@ -124,7 +138,7 @@ export default function TopNav() {
             <Link href="/settings" aria-label="Open Settings" className="flex items-center gap-2 group">
               <span className="text-sm font-semibold text-on-surface-variant hidden md:inline group-hover:text-primary dark:text-neutral-100">{displayName}</span>
               <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center group-hover:border-primary cursor-pointer dark:border-neutral-700">
-                <span className="text-primary text-[13px] font-bold">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
+                <span className="text-primary text-[13px] font-bold dark:text-neutral-100">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
               </div>
             </Link>
           ) : (
@@ -154,11 +168,11 @@ export default function TopNav() {
           <div className="absolute top-0 left-0 h-full w-72 max-w-[85vw] bg-surface border-r border-outline-variant shadow-xl p-4 flex flex-col gap-4 dark:bg-neutral-900 dark:border-neutral-800">
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                <Image src="/logo-v2.svg" alt="JobMatch AI" width={160} height={40} className="h-10 w-auto object-contain" />
+                <Image src={isDark ? "/logo-v2-white.svg" : "/logo-v2.svg"} alt="JobMatch AI" width={140} height={36} className="h-8 w-auto object-contain" />
               </Link>
               <button
                 type="button"
-                className="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low"
+                className="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low dark:hover:bg-neutral-800 dark:text-neutral-200 hover:dark:text-neutral-100"
                 aria-label="Close menu"
                 onClick={() => setMobileOpen(false)}
               >
@@ -178,8 +192,8 @@ export default function TopNav() {
                       onClick={() => setMobileOpen(false)}
                       className={
                         active
-                          ? 'px-2 py-3 rounded-lg font-semibold text-primary bg-primary/10'
-                          : 'px-2 py-3 rounded-lg font-medium text-on-surface-variant hover:bg-surface-container-low'
+                          ? 'px-2 py-3 rounded-lg font-semibold text-primary bg-primary/10 dark:text-neutral-100'
+                          : 'px-2 py-3 rounded-lg font-medium text-on-surface-variant hover:bg-surface-container-low dark:text-neutral-200 dark:hover:bg-neutral-800'
                       }
                     >
                       {l.label}
@@ -191,8 +205,8 @@ export default function TopNav() {
               {displayName ? (
                 <Link href="/settings" onClick={()=>setMobileOpen(false)} aria-label="Open Settings" className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center">
-                      <span className="text-primary text-[13px] font-bold">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
+                    <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center dark:border-neutral-700">
+                      <span className="text-primary text-[13px] font-bold dark:text-neutral-100">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
                     </div>
                     <span className="text-sm font-semibold text-on-surface-variant">{displayName}</span>
                   </div>

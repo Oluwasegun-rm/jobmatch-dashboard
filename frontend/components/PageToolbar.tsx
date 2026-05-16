@@ -4,7 +4,7 @@ import { ReactNode } from "react"
 
 export default function PageToolbar({ title, placeholder = "Search...", children }: { title?: string; placeholder?: string; children?: ReactNode }) {
   return (
-    <div className="bg-surface border-b border-outline-variant dark:bg-neutral-900 dark:border-neutral-800">
+    <div className="bg-background dark:bg-neutral-950">
       <div className="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
         {title ? <h2 className="text-[18px] font-semibold dark:text-neutral-100">{title}</h2> : <div />}
         <div className="flex items-center gap-4">
