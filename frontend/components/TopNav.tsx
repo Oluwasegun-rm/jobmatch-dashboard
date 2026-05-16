@@ -70,7 +70,7 @@ export default function TopNav() {
   }, [])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant dark:bg-neutral-900/80 dark:border-neutral-800">
       <nav className="max-w-[1600px] mx-auto h-16 flex items-center justify-between px-gutter">
         <Link href="/" className="flex items-center gap-2" aria-label="JobMatch AI Home">
           {logoOk ? (
@@ -121,12 +121,12 @@ export default function TopNav() {
         <div className="flex items-center gap-3">
           <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">notifications</button>
           {displayName ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-on-surface-variant hidden md:inline">{displayName}</span>
-              <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center">
+            <Link href="/settings" aria-label="Open Settings" className="flex items-center gap-2 group">
+              <span className="text-sm font-semibold text-on-surface-variant hidden md:inline group-hover:text-primary">{displayName}</span>
+              <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center group-hover:border-primary cursor-pointer">
                 <span className="text-primary text-[13px] font-bold">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
               </div>
-            </div>
+            </Link>
           ) : (
             <button
               onClick={() => {
@@ -151,7 +151,7 @@ export default function TopNav() {
             onClick={() => setMobileOpen(false)}
             aria-hidden
           />
-          <div className="absolute top-0 left-0 h-full w-72 max-w-[85vw] bg-surface border-r border-outline-variant shadow-xl p-4 flex flex-col gap-4">
+          <div className="absolute top-0 left-0 h-full w-72 max-w-[85vw] bg-surface border-r border-outline-variant shadow-xl p-4 flex flex-col gap-4 dark:bg-neutral-900 dark:border-neutral-800">
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
                 <Image src="/logo-v2.svg" alt="JobMatch AI" width={160} height={40} className="h-10 w-auto object-contain" />
@@ -189,14 +189,15 @@ export default function TopNav() {
             </nav>
             <div className="mt-auto pt-2 border-t border-outline-variant/60">
               {displayName ? (
-                <div className="flex items-center justify-between">
+                <Link href="/settings" onClick={()=>setMobileOpen(false)} aria-label="Open Settings" className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant bg-primary/10 flex items-center justify-center">
                       <span className="text-primary text-[13px] font-bold">{displayName.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
                     </div>
                     <span className="text-sm font-semibold text-on-surface-variant">{displayName}</span>
                   </div>
-                </div>
+                  <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </Link>
               ) : (
                 <button
                   onClick={() => {

@@ -18,6 +18,8 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
+  // Theme
+  const [theme, setTheme] = useState<'light'|'dark'|'system'>('system')
 
   useEffect(() => {
     async function loadMe() {
@@ -49,7 +51,20 @@ export default function SettingsPage() {
       }
     }
     loadMe()
+    // Load theme preference
+    try {
+      const t = (localStorage.getItem('jobmatch:theme') as 'light'|'dark'|'system'|null) || 'system'
+      setTheme(t)
+    } catch {}
   }, [])
+
+  function applyTheme(next: 'light'|'dark'|'system') {
+    setTheme(next)
+    try {
+      localStorage.setItem('jobmatch:theme', next)
+      window.dispatchEvent(new CustomEvent('jobmatch:theme-apply', { detail: { mode: next } }))
+    } catch {}
+  }
 
   async function saveDisplayName() {
     if (!newDisplayName.trim()) return
@@ -142,7 +157,7 @@ export default function SettingsPage() {
           ) : me ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Profile */}
-              <section className="bg-white rounded-xl border border-outline-variant p-card-padding flex flex-col items-center text-center">
+              <section className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 p-card-padding flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-primary/10 border border-outline-variant flex items-center justify-center mb-3">
                   <span className="text-primary text-[18px] font-bold">{(me.display_name || me.username).split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase()}</span>
                 </div>
@@ -152,7 +167,7 @@ export default function SettingsPage() {
               </section>
 
               {/* Update Display Name */}
-              <section className="bg-white rounded-xl border border-outline-variant p-card-padding lg:col-span-2">
+              <section className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 p-card-padding lg:col-span-2">
                 <h3 className="text-title-sm font-semibold mb-3">Display Name</h3>
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
                   <input value={newDisplayName} onChange={(e)=>setNewDisplayName(e.target.value)} className="flex-1 p-2 border border-outline-variant rounded-lg text-sm" />
@@ -161,7 +176,7 @@ export default function SettingsPage() {
               </section>
 
               {/* Update Username */}
-              <section className="bg-white rounded-xl border border-outline-variant p-card-padding lg:col-span-2">
+              <section className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 p-card-padding lg:col-span-2">
                 <h3 className="text-title-sm font-semibold mb-3">Change Username</h3>
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
                   <input value={newUsername} onChange={(e)=>setNewUsername(e.target.value)} className="flex-1 p-2 border border-outline-variant rounded-lg text-sm" />
@@ -170,7 +185,7 @@ export default function SettingsPage() {
               </section>
 
               {/* Change Password */}
-              <section className="bg-white rounded-xl border border-outline-variant p-card-padding lg:col-span-2">
+              <section className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 p-card-padding lg:col-span-2">
                 <h3 className="text-title-sm font-semibold mb-3">Change Password</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -184,6 +199,25 @@ export default function SettingsPage() {
                 </div>
                 <div className="mt-3">
                   <button onClick={changePassword} disabled={saving} className="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-bold disabled:opacity-50">Change Password</button>
+                </div>
+              </section>
+
+              {/* Theme Selection */}
+              <section className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 p-card-padding lg:col-span-3">
+                <h3 className="text-title-sm font-semibold mb-3">Appearance</h3>
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="theme" className="accent-current" checked={theme==='light'} onChange={()=>applyTheme('light')} />
+                    <span>Light</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="theme" className="accent-current" checked={theme==='dark'} onChange={()=>applyTheme('dark')} />
+                    <span>Dark</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="theme" className="accent-current" checked={theme==='system'} onChange={()=>applyTheme('system')} />
+                    <span>System</span>
+                  </label>
                 </div>
               </section>
             </div>

@@ -41,6 +41,7 @@ export default function AnalysisPage() {
   const [toastMsg, setToastMsg] = useState('')
   const [prevResume, setPrevResume] = useState('')
   const [prevJob, setPrevJob] = useState('')
+  // read query string on client for deep-linking
 
   const canAnalyze = useMemo(() => resume.trim().length > 0 && job.trim().length > 0, [resume, job])
 
@@ -75,6 +76,19 @@ export default function AnalysisPage() {
       if (storedDesc && !job.trim()) setJob(htmlToText(storedDesc))
       if (storedMeta) setJobMeta(JSON.parse(storedMeta))
     } catch {}
+  }, [])
+
+  // If deep-linked with ?id=, load that analysis session
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      const idParam = sp.get('id')
+      if (!idParam) return
+      const id = Number(idParam)
+      if (!Number.isFinite(id)) return
+      loadAnalysisById(id)
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function computeAnalysis(r: string, j: string) {
@@ -247,8 +261,8 @@ export default function AnalysisPage() {
         <div className="p-container-padding max-w-[1600px] mx-auto w-full grid grid-cols-12 gap-gutter">
           {/* Left column */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
-            <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-              <div className="p-card-padding border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm overflow-hidden">
+              <div className="p-card-padding border-b border-outline-variant dark:border-neutral-800 flex justify-between items-center bg-surface-container-lowest dark:bg-neutral-900">
                 <h2 className="text-[18px] font-semibold flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">edit_note</span>
                   Workspace
@@ -309,17 +323,17 @@ export default function AnalysisPage() {
                   </label>
                 </div>
               </div>
-              <div className="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Resume Text</label>
-                  <textarea value={resume} onChange={(e) => setResume(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant rounded-lg resize-none bg-surface-container-lowest" placeholder="Paste resume content here..." />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Job Description</label>
-                  <textarea value={job} onChange={(e) => setJob(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant rounded-lg resize-none bg-surface-container-lowest" placeholder="Paste job requirements here..." />
-                </div>
-              </div>
-              <div className="p-card-padding bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+               <div className="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="space-y-2">
+                   <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Resume Text</label>
+                   <textarea value={resume} onChange={(e) => setResume(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950" placeholder="Paste resume content here..." />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Job Description</label>
+                   <textarea value={job} onChange={(e) => setJob(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950" placeholder="Paste job requirements here..." />
+                 </div>
+               </div>
+               <div className="p-card-padding bg-surface-container-low dark:bg-neutral-900 border-t border-outline-variant dark:border-neutral-800 flex items-center justify-between">
                 {error && <p className="text-error text-sm">{error}</p>}
                 <button onClick={onAnalyze} disabled={!canAnalyze || loading} className="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2">
                   {loading ? 'Analyzing…' : 'Analyze Match'}
@@ -329,7 +343,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Live Resume Feedback */}
-            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-6">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm p-6">
               <span className="text-[12px] text-on-surface-variant uppercase font-bold">Live Resume Feedback</span>
               <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2">
@@ -380,13 +394,13 @@ export default function AnalysisPage() {
             {result && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Score card */}
-                <div className="md:col-span-1 bg-white p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col items-center text-center">
+                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center">
                   <span className="text-[12px] text-on-surface-variant uppercase mb-2 font-bold">Overall Match</span>
                   <div className="text-5xl font-mono text-primary">{result.score}%</div>
                   <p className="text-sm text-on-surface-variant mt-2">{result.score >= 80 ? 'Strong Fit' : result.score >= 60 ? 'Good Fit' : 'Partial Fit'}</p>
                 </div>
                 {/* Skills */}
-                <div className="md:col-span-2 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+                <div className="md:col-span-2 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm">
                   <div className="flex flex-col md:flex-row md:items-start gap-6">
                     <div className="flex-1">
                       <p className="text-sm font-bold mb-2 flex items-center gap-1"><span className="material-symbols-outlined text-green-600">check_circle</span>Matched Skills</p>
@@ -407,7 +421,7 @@ export default function AnalysisPage() {
                   </div>
                 </div>
                 {/* Analysis Summary */}
-                <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+                <div className="md:col-span-3 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Analysis Summary</span>
                   {/* Overview */}
                   <div className="mt-2">
@@ -448,7 +462,7 @@ export default function AnalysisPage() {
                 </div>
 
                 {/* Suggestions */}
-                <div className="md:col-span-3 bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+                <div className="md:col-span-3 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm">
                   <span className="text-[12px] text-on-surface-variant uppercase font-bold">Suggestions</span>
                   <ul className="mt-3 space-y-2">
                     {result.suggestions.map((tip, i) => (
@@ -473,8 +487,8 @@ export default function AnalysisPage() {
 
           {/* Right column: History */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
-            <div className="bg-white rounded-xl border border-outline-variant shadow-sm flex flex-col min-h-[300px]">
-              <div className="p-card-padding border-b border-outline-variant flex items-center justify-between">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col min-h-[300px]">
+              <div className="p-card-padding border-b border-outline-variant dark:border-neutral-800 flex items-center justify-between">
                 <h3 className="text-[18px] font-bold flex items-center gap-2">
                   <span className="material-symbols-outlined text-on-surface-variant">history</span>
                   Analysis History
@@ -484,7 +498,7 @@ export default function AnalysisPage() {
               <div className="flex-1 overflow-y-auto p-2">
                 <div className="space-y-1">
                   {history.map((h) => (
-                    <div key={h.id} className="p-3 hover:bg-surface-container-low rounded-lg border border-transparent hover:border-outline-variant">
+                    <div key={h.id} className="p-3 hover:bg-surface-container-low dark:hover:bg-neutral-800 rounded-lg border border-transparent hover:border-outline-variant dark:hover:border-neutral-700">
                       <div className="flex justify-between items-start gap-2 mb-1">
                         <button className="text-left flex-1" onClick={() => loadAnalysisById(h.id)} title="View analysis">
                           <p className="text-sm font-bold truncate">{h.job_title ? `${h.job_title} – ${h.job_company ?? ''}` : `Analysis #${h.id}`}</p>
