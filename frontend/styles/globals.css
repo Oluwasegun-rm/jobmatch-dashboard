@@ -2,8 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #f9fafb;
+/* Color tokens as CSS variables for light/dark theming */
+:root {
+  --color-primary: 0 0 0; /* #000000 */
+  --color-on-primary: 255 255 255; /* #ffffff */
+  --color-on-surface: 27 27 29; /* #1b1b1d */
+  --color-background: 252 248 250; /* #fcf8fa */
+  --color-surface: 252 248 250; /* #fcf8fa */
+  --color-surface-bright: 252 248 250; /* #fcf8fa */
+  --color-surface-container-lowest: 255 255 255; /* #ffffff */
+  --color-surface-container-low: 246 243 244; /* #f6f3f4 */
+  --color-surface-variant: 229 226 227; /* #e5e2e3 */
+  --color-surface-container: 240 237 238; /* #f0edee */
+  --color-surface-container-high: 234 231 233; /* #eae7e9 */
+  --color-surface-container-highest: 229 226 227; /* #e5e2e3 */
+  --color-outline: 118 119 125; /* #76777d */
+  --color-outline-variant: 198 198 205; /* #c6c6cd */
+  --color-error: 186 26 26; /* #ba1a1a */
+  --color-on-error: 255 255 255; /* #ffffff */
+  --color-primary-container: 20 27 43; /* #141b2b */
+  --color-on-primary-container: 125 132 151; /* #7d8497 */
+  --color-secondary: 88 95 108; /* #585f6c */
+  --color-on-surface-variant: 69 70 76; /* #45464c */
+  --color-primary-fixed: 220 226 247; /* #dce2f7 */
+  --color-primary-fixed-dim: 192 198 219; /* #c0c6db */
+  --color-tertiary: 0 0 0; /* #000000 */
+  --color-tertiary-fixed: 249 222 191; /* #f9debf */
+  --color-tertiary-fixed-dim: 220 194 164; /* #dcc2a4 */
+  --color-tertiary-container: 38 25 6; /* #261906 */
+  --color-on-tertiary: 255 255 255; /* #ffffff */
+  --color-on-tertiary-container: 150 128 101; /* #968065 */
+  --color-on-tertiary-fixed: 38 25 6; /* #261906 */
+  --color-on-tertiary-fixed-variant: 85 68 45; /* #55442d */
+  --color-inverse-on-surface: 243 240 241; /* #f3f0f1 */
+  --color-inverse-surface: 48 48 49; /* #303031 */
+  --color-inverse-primary: 192 198 219; /* #c0c6db */
+  --color-surface-tint: 87 94 112; /* #575e70 */
+  --color-secondary-container: 220 226 243; /* #dce2f3 */
+  --color-secondary-fixed: 220 226 243; /* #dce2f3 */
+  --color-secondary-fixed-dim: 192 199 214; /* #c0c7d6 */
+  --color-on-secondary: 255 255 255; /* #ffffff */
+  --color-on-secondary-container: 94 101 114; /* #5e6572 */
+  --color-on-primary-fixed: 20 27 43; /* #141b2b */
+  --color-on-primary-fixed-variant: 64 71 88; /* #404758 */
+  --color-error-container: 255 218 214; /* #ffdad6 */
+}
+
+.dark {
+  --color-primary: 255 255 255; /* light text on dark */
+  --color-on-primary: 20 20 20; /* dark text on light primary */
+  --color-on-surface: 240 240 240; /* base text */
+  --color-background: 10 10 10; /* neutral-950 */
+  --color-surface: 10 10 10;
+  --color-surface-bright: 10 10 10;
+  --color-surface-container-lowest: 10 10 10;
+  --color-surface-container-low: 32 32 36; /* ~neutral-800 */
+  --color-surface-variant: 38 38 42; /* ~neutral-800/900 */
+  --color-surface-container: 32 32 36;
+  --color-surface-container-high: 32 32 36;
+  --color-surface-container-highest: 38 38 42;
+  --color-outline: 64 64 64;
+  --color-outline-variant: 64 64 64;
+  --color-error: 186 26 26; /* keep red consistent */
+  --color-on-error: 255 255 255;
+  --color-primary-container: 32 32 36;
+  --color-on-primary-container: 240 240 240;
+  --color-secondary: 180 184 192;
+  --color-on-surface-variant: 160 160 160;
+  --color-primary-fixed: 192 198 219;
+  --color-primary-fixed-dim: 160 166 187;
+  --color-tertiary: 255 255 255;
+  --color-tertiary-fixed: 192 192 192;
+  --color-tertiary-fixed-dim: 160 160 160;
+  --color-tertiary-container: 38 38 42;
+  --color-on-tertiary: 255 255 255;
+  --color-on-tertiary-container: 200 200 200;
+  --color-on-tertiary-fixed: 230 230 230;
+  --color-on-tertiary-fixed-variant: 200 200 200;
+  --color-inverse-on-surface: 20 20 20;
+  --color-inverse-surface: 240 240 240;
+  --color-inverse-primary: 192 198 219;
+  --color-surface-tint: 120 120 130;
+  --color-secondary-container: 32 32 36;
+  --color-secondary-fixed: 32 32 36;
+  --color-secondary-fixed-dim: 48 48 52;
+  --color-on-secondary: 255 255 255;
+  --color-on-secondary-container: 200 200 200;
+  --color-on-primary-fixed: 240 240 240;
+  --color-on-primary-fixed-variant: 220 220 230;
+  --color-error-container: 80 20 20;
 }
 
 .material-symbols-outlined {

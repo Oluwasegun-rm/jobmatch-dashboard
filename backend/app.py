@@ -9,6 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response, PlainTextResponse
 from pydantic import BaseModel
 from typing import Any, Dict
+from datetime import datetime
 
 from jobmatch.analyzer import analyze
 from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash
@@ -295,15 +296,37 @@ async def jobs_search(
             any_matches = [j for j in jobs if any(tok in _hay(j) for tok in tokens)]
             jobs = any_matches or jobs
 
+    # Stable sort by posted_at desc (fallback to original order when missing)
+    def _parse_dt(v: str | None) -> float:
+        if not v:
+            return 0.0
+        s = str(v).strip()
+        try:
+            # Handle common ISO forms and trailing Z
+            s2 = s.replace("Z", "+00:00")
+            return datetime.fromisoformat(s2).timestamp()
+        except Exception:
+            # As fallback, try a few common formats
+            for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%m/%d/%Y"):
+                try:
+                    return datetime.strptime(s, fmt).timestamp()
+                except Exception:
+                    continue
+        return 0.0
+
+    jobs = sorted(jobs, key=lambda j: _parse_dt(j.posted_at), reverse=True)
+
     total = len(jobs)
     start = (page - 1) * per_page
     end = start + per_page
     results = jobs[start:end] if source == "remotive" else jobs
+    has_more = (total > end) if source == "remotive" else (len(jobs) >= per_page)
     return {
         "ok": True,
         "page": page,
         "per_page": per_page,
         "total": total,
+        "has_more": has_more,
         "results": [
             {
                 "id": j.id,
