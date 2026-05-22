@@ -20,8 +20,8 @@
   --color-outline-variant: 198 198 205; /* #c6c6cd */
   --color-error: 186 26 26; /* #ba1a1a */
   --color-on-error: 255 255 255; /* #ffffff */
-  /* Brand blue for prominent sections */
-  --color-primary-container: 30 64 175; /* #1E40AF */
+  /* Brand blue for prominent sections (darker) */
+  --color-primary-container: 15 61 145; /* #0F3D91 */
   --color-on-primary-container: 255 255 255; /* white on blue */
   --color-secondary: 88 95 108; /* #585f6c */
   --color-on-surface-variant: 69 70 76; /* #45464c */
@@ -66,8 +66,9 @@
   --color-outline-variant: 64 64 64;
   --color-error: 186 26 26; /* keep red consistent */
   --color-on-error: 255 255 255;
-  /* Keep brand blue consistent in dark mode too */
-  --color-primary-container: 30 64 175; /* #1E40AF */
+  /* Dark theme: brand accent for buttons and sections */
+  --color-primary: 30 58 138; /* #1E3A8A for buttons etc */
+  --color-primary-container: 15 61 145; /* #0F3D91 */
   --color-on-primary-container: 255 255 255;
   --color-secondary: 180 184 192;
   --color-on-surface-variant: 160 160 160;
