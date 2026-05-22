@@ -200,7 +200,7 @@ export default function LandingPage() {
               <h3 className="mt-4 text-headline-md text-on-primary">Skill Gap Analysis</h3>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-center gap-2 text-error text-sm"><span className="material-symbols-outlined text-[16px]">close</span> Missing: Kubernetes</li>
-                <li className="flex items-center gap-2 text-on-primary/90 text-sm"><span className="material-symbols-outlined text-[16px]">check</span> Found: Terraform</li>
+                <li className="flex items-center gap-2 text-green-400 text-sm"><span className="material-symbols-outlined text-[16px] text-green-400">check</span> Found: Terraform</li>
               </ul>
             </div>
             {/* Real-time Resume Feedback (Stitch-style) */}
