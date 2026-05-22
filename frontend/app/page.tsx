@@ -228,7 +228,7 @@ export default function LandingPage() {
             <div className="relative z-10">
               <h2 className="text-display-lg text-white mb-4">Ready to land your dream role?</h2>
               <p className="text-on-primary-container max-w-2xl mx-auto mb-8">Start with a transparent baseline today—no secrets, no black boxes.</p>
-              <Link href="/analysis" className="bg-white text-primary px-10 py-4 rounded-lg font-bold hover:bg-surface-container-low active:scale-[0.98]">Get Started for Free</Link>
+              <Link href="/analysis" className="bg-white text-neutral-900 px-10 py-4 rounded-lg font-bold hover:bg-surface-container-low active:scale-[0.98]">Get Started for Free</Link>
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-fixed-dim/10 rounded-full blur-3xl -mr-32 -mt-32" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-fixed-dim/5 rounded-full blur-2xl -ml-24 -mb-24" />

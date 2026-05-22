@@ -20,8 +20,9 @@
   --color-outline-variant: 198 198 205; /* #c6c6cd */
   --color-error: 186 26 26; /* #ba1a1a */
   --color-on-error: 255 255 255; /* #ffffff */
-  --color-primary-container: 20 27 43; /* #141b2b */
-  --color-on-primary-container: 125 132 151; /* #7d8497 */
+  /* Brand blue for prominent sections */
+  --color-primary-container: 30 64 175; /* #1E40AF */
+  --color-on-primary-container: 255 255 255; /* white on blue */
   --color-secondary: 88 95 108; /* #585f6c */
   --color-on-surface-variant: 69 70 76; /* #45464c */
   --color-primary-fixed: 220 226 247; /* #dce2f7 */
@@ -50,7 +51,7 @@
 
 .dark {
   --color-primary: 255 255 255; /* light text on dark */
-  --color-on-primary: 20 20 20; /* dark text on light primary */
+  --color-on-primary: 255 255 255; /* keep white on brand/primary backgrounds */
   --color-on-surface: 240 240 240; /* base text */
   --color-background: 10 10 10; /* neutral-950 */
   --color-surface: 10 10 10;
@@ -65,8 +66,9 @@
   --color-outline-variant: 64 64 64;
   --color-error: 186 26 26; /* keep red consistent */
   --color-on-error: 255 255 255;
-  --color-primary-container: 32 32 36;
-  --color-on-primary-container: 240 240 240;
+  /* Keep brand blue consistent in dark mode too */
+  --color-primary-container: 30 64 175; /* #1E40AF */
+  --color-on-primary-container: 255 255 255;
   --color-secondary: 180 184 192;
   --color-on-surface-variant: 160 160 160;
   --color-primary-fixed: 192 198 219;
