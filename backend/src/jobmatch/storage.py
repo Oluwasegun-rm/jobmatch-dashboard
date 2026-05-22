@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS analyses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,
     score INTEGER NOT NULL,
+    name TEXT,
     resume_text TEXT NOT NULL,
     job_text TEXT NOT NULL,
     matched_skills TEXT NOT NULL,
@@ -53,6 +54,8 @@ def init_db(db_path: str | None = None) -> None:
         cur.execute("PRAGMA table_info(analyses)")
         cols = {row[1] for row in cur.fetchall()}  # type: ignore[index]
         to_add = []
+        if "name" not in cols:
+            to_add.append(("name", "TEXT"))
         if "job_source" not in cols:
             to_add.append(("job_source", "TEXT"))
         if "job_url" not in cols:
@@ -88,6 +91,7 @@ def save_analysis(
     score: int,
     matched_skills: List[str] | Any,
     missing_skills: List[str] | Any,
+    name: str | None = None,
     job_source: str | None = None,
     job_url: str | None = None,
     job_title: str | None = None,
@@ -101,10 +105,11 @@ def save_analysis(
     with closing(_connect(path)) as conn:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO analyses (created_at, score, resume_text, job_text, matched_skills, missing_skills, job_source, job_url, job_title, job_company, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO analyses (created_at, score, name, resume_text, job_text, matched_skills, missing_skills, job_source, job_url, job_title, job_company, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 datetime.utcnow().isoformat(timespec="seconds") + "Z",
                 int(score),
+                (name or None),
                 resume_text,
                 job_text,
                 json.dumps(sorted(list(matched_skills))),
@@ -128,17 +133,17 @@ def fetch_recent(limit: int = 10, db_path: str | None = None, user_id: int | Non
         cur = conn.cursor()
         if user_id is not None:
             cur.execute(
-                "SELECT id, created_at, score, matched_skills, missing_skills, job_title, job_company FROM analyses WHERE user_id = ? ORDER BY id DESC LIMIT ?",
+                "SELECT id, created_at, score, name, matched_skills, missing_skills, job_title, job_company FROM analyses WHERE user_id = ? ORDER BY id DESC LIMIT ?",
                 (int(user_id), int(limit)),
             )
         else:
             cur.execute(
-                "SELECT id, created_at, score, matched_skills, missing_skills, job_title, job_company FROM analyses ORDER BY id DESC LIMIT ?",
+                "SELECT id, created_at, score, name, matched_skills, missing_skills, job_title, job_company FROM analyses ORDER BY id DESC LIMIT ?",
                 (int(limit),),
             )
         rows = cur.fetchall()
     results: List[Dict[str, Any]] = []
-    for rid, created_at, score, matched_json, missing_json, job_title, job_company in rows:
+    for rid, created_at, score, name, matched_json, missing_json, job_title, job_company in rows:
         try:
             matched = json.loads(matched_json)
             missing = json.loads(missing_json)
@@ -149,6 +154,7 @@ def fetch_recent(limit: int = 10, db_path: str | None = None, user_id: int | Non
                 "id": rid,
                 "created_at": created_at,
                 "score": score,
+                "name": name,
                 "matched_skills": matched,
                 "missing_skills": missing,
                 "job_title": job_title,
@@ -165,7 +171,7 @@ def fetch_by_id(row_id: int, db_path: str | None = None) -> Dict[str, Any] | Non
     with closing(_connect(path)) as conn:
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, created_at, score, resume_text, job_text, matched_skills, missing_skills, job_source, job_url, job_title, job_company FROM analyses WHERE id = ?",
+            "SELECT id, created_at, score, name, resume_text, job_text, matched_skills, missing_skills, job_source, job_url, job_title, job_company FROM analyses WHERE id = ?",
             (int(row_id),),
         )
         row = cur.fetchone()
@@ -175,6 +181,7 @@ def fetch_by_id(row_id: int, db_path: str | None = None) -> Dict[str, Any] | Non
         rid,
         created_at,
         score,
+        name,
         resume_text,
         job_text,
         matched_json,
@@ -193,6 +200,7 @@ def fetch_by_id(row_id: int, db_path: str | None = None) -> Dict[str, Any] | Non
         "id": rid,
         "created_at": created_at,
         "score": score,
+        "name": name,
         "resume_text": resume_text or "",
         "job_text": job_text or "",
         "matched_skills": matched,
@@ -202,6 +210,16 @@ def fetch_by_id(row_id: int, db_path: str | None = None) -> Dict[str, Any] | Non
         "job_title": job_title,
         "job_company": job_company,
     }
+
+
+def update_analysis_name(row_id: int, name: str | None, db_path: str | None = None) -> None:
+    cfg = load_config()
+    path = db_path or cfg.db_path
+    init_db(path)
+    with closing(_connect(path)) as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE analyses SET name = ? WHERE id = ?", ((name or None), int(row_id)))
+        conn.commit()
 
 
 # User helpers

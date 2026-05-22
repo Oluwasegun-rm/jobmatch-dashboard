@@ -200,7 +200,7 @@ export default function LandingPage() {
               <h3 className="mt-4 text-headline-md text-on-primary">Skill Gap Analysis</h3>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-center gap-2 text-error text-sm"><span className="material-symbols-outlined text-[16px]">close</span> Missing: Kubernetes</li>
-                <li className="flex items-center gap-2 text-on-primary/90 text-sm"><span className="material-symbols-outlined text-[16px]">check</span> Found: Terraform</li>
+                <li className="flex items-center gap-2 text-green-400 text-sm"><span className="material-symbols-outlined text-[16px] text-green-400">check</span> Found: Terraform</li>
               </ul>
             </div>
             {/* Real-time Resume Feedback (Stitch-style) */}
@@ -214,7 +214,7 @@ export default function LandingPage() {
                   <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
                   <div className="h-2 w-full bg-white/20 rounded-full"></div>
                   <div className="p-2 bg-white/10 border-l-4 border-white rounded">
-                    <p className="text-[10px] font-mono text-primary">AI SUGGESTION: Replace "responsible for" with "Spearheaded" and add a metric (+15%).</p>
+                    <p className="text-[10px] font-mono text-on-primary">AI SUGGESTION: Replace "responsible for" with "Spearheaded" and add a metric (+15%).</p>
                   </div>
                 </div>
               </div>
@@ -228,7 +228,7 @@ export default function LandingPage() {
             <div className="relative z-10">
               <h2 className="text-display-lg text-white mb-4">Ready to land your dream role?</h2>
               <p className="text-on-primary-container max-w-2xl mx-auto mb-8">Start with a transparent baseline today—no secrets, no black boxes.</p>
-              <Link href="/analysis" className="bg-white text-primary px-10 py-4 rounded-lg font-bold hover:bg-surface-container-low active:scale-[0.98]">Get Started for Free</Link>
+              <Link href="/analysis" className="bg-white text-neutral-900 px-10 py-4 rounded-lg font-bold hover:bg-surface-container-low active:scale-[0.98]">Get Started for Free</Link>
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-fixed-dim/10 rounded-full blur-3xl -mr-32 -mt-32" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-fixed-dim/5 rounded-full blur-2xl -ml-24 -mb-24" />

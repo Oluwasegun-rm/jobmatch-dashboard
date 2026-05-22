@@ -40,6 +40,7 @@ export default function JobsPage() {
   const [previewJob, setPreviewJob] = useState<JobItem | null>(null)
   const [favs, setFavs] = useState<Set<string>>(new Set())
   const [total, setTotal] = useState(0)
+  const [hasMore, setHasMore] = useState<boolean>(false)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -97,7 +98,8 @@ export default function JobsPage() {
       const data: SearchResponse = await res.json()
       if (!data?.ok) throw new Error('Search failed')
       setResults(data.results)
-      setTotal(data.total || 0)
+      setTotal((data as any).total || 0)
+      setHasMore(Boolean((data as any).has_more))
     } catch (e: any) {
       if (e?.name !== 'AbortError') setError(e?.message || 'Failed to search')
     } finally {
@@ -178,15 +180,15 @@ export default function JobsPage() {
             <div className="p-card-padding grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="col-span-2">
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Query</label>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400" placeholder="e.g., data analyst, machine learning" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="e.g., data analyst, machine learning" />
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Location</label>
-                <input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400" placeholder="e.g., USA, Europe" />
+                <input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="e.g., USA, Europe" />
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                   <option value="">All</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -195,7 +197,7 @@ export default function JobsPage() {
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Job Type</label>
-                <select value={jobType} onChange={(e) => setJobType(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
+                <select value={jobType} onChange={(e) => setJobType(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                   <option value="">All</option>
                   <option value="full_time">Full-time</option>
                   <option value="part_time">Part-time</option>
@@ -206,7 +208,7 @@ export default function JobsPage() {
               </div>
               <div>
                 <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Source</label>
-                <select value={source} onChange={(e)=>{ setSource(e.target.value); setPage(1); onSearch(1, perPage) }} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100">
+                <select value={source} onChange={(e)=>{ setSource(e.target.value); setPage(1); onSearch(1, perPage) }} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                   {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
@@ -285,7 +287,7 @@ export default function JobsPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-2">
             <div className="text-sm text-on-surface-variant">Page {page} of {Math.max(1, Math.ceil(total / perPage))} • {total} results</div>
             <div className="flex items-center gap-2">
               <button
@@ -294,8 +296,8 @@ export default function JobsPage() {
                 className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-surface-container-low"
               >Previous</button>
               <button
-                onClick={() => { const maxP = Math.max(1, Math.ceil(total / perPage)); if (page < maxP) { const p = page + 1; setPage(p); onSearch(p, perPage) } }}
-                disabled={loading || page >= Math.max(1, Math.ceil(total / perPage))}
+                onClick={() => { const maxP = Math.max(1, Math.ceil(total / perPage)); if (hasMore && page < maxP) { const p = page + 1; setPage(p); onSearch(p, perPage) } }}
+                disabled={loading || !hasMore}
                 className="px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-surface-container-low"
               >Next</button>
             </div>

@@ -41,6 +41,8 @@ export default function AnalysisPage() {
   const [toastMsg, setToastMsg] = useState('')
   const [prevResume, setPrevResume] = useState('')
   const [prevJob, setPrevJob] = useState('')
+  const [currentId, setCurrentId] = useState<number | null>(null)
+  const [analysisName, setAnalysisName] = useState<string>('')
   // read query string on client for deep-linking
 
   const canAnalyze = useMemo(() => resume.trim().length > 0 && job.trim().length > 0, [resume, job])
@@ -154,6 +156,8 @@ export default function AnalysisPage() {
       const j = htmlToText(String(data.result.job_text || ''))
       setResume(r)
       setJob(j)
+      setCurrentId(Number(data.result.id))
+      setAnalysisName(String(data.result.name || ''))
       setJobMeta({
         source: data.result.job_source || undefined,
         url: data.result.job_url || undefined,
@@ -166,6 +170,22 @@ export default function AnalysisPage() {
       setError(e?.message || 'Failed to load analysis')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function saveName() {
+    if (!currentId) return
+    try {
+      const res = await fetch(`${API_BASE}/analysis/${currentId}/rename`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: analysisName.trim() || null })
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) throw new Error(data?.detail || 'Failed to rename')
+      await fetchHistory()
+      setToastMsg('Name updated')
+      setUndoOpen(true)
+    } catch (e: any) {
+      alert(e?.message || 'Failed to rename')
     }
   }
 
@@ -263,10 +283,25 @@ export default function AnalysisPage() {
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <div className="bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm overflow-hidden">
               <div className="p-card-padding border-b border-outline-variant dark:border-neutral-800 flex justify-between items-center bg-surface-container-lowest dark:bg-neutral-900">
-                <h2 className="text-[18px] font-semibold flex items-center gap-2 dark:text-neutral-100">
-                  <span className="material-symbols-outlined text-primary">edit_note</span>
-                  Workspace
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[18px] font-semibold flex items-center gap-2 dark:text-neutral-100">
+                    <span className="material-symbols-outlined text-primary">edit_note</span>
+                    Workspace
+                  </h2>
+                  {currentId && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={analysisName}
+                        onChange={(e)=>setAnalysisName(e.target.value)}
+                        placeholder="Untitled analysis"
+                        className="px-2 py-1 text-sm border border-outline-variant rounded-lg dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        style={{ width: Math.max(140, Math.min(320, analysisName.length * 10 + 60)) }}
+                      />
+                      <button onClick={saveName} className="px-2 py-1 border border-outline-variant rounded-lg text-[12px] font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100">Save Name</button>
+                      <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/analysis?id=${currentId}`) }} className="px-2 py-1 border border-outline-variant rounded-lg text-[12px] font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100">Copy Link</button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="hidden md:flex items-center gap-2">
                     <input
@@ -326,11 +361,11 @@ export default function AnalysisPage() {
                <div className="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
                    <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Resume Text</label>
-                   <textarea value={resume} onChange={(e) => setResume(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950" placeholder="Paste resume content here..." />
+                   <textarea value={resume} onChange={(e) => setResume(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="Paste resume content here..." />
                  </div>
                  <div className="space-y-2">
                    <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Job Description</label>
-                   <textarea value={job} onChange={(e) => setJob(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950" placeholder="Paste job requirements here..." />
+                   <textarea value={job} onChange={(e) => setJob(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="Paste job requirements here..." />
                  </div>
                </div>
                <div className="p-card-padding bg-surface-container-low dark:bg-neutral-900 border-t border-outline-variant dark:border-neutral-800 flex items-center justify-between">
@@ -394,7 +429,7 @@ export default function AnalysisPage() {
             {result && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Score card */}
-                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center self-start">
+                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center self-start md:sticky md:top-4">
                   <span className="text-[12px] text-on-surface-variant uppercase mb-2 font-bold">Overall Match</span>
                   <div className="text-5xl font-mono text-primary">{result.score}%</div>
                   <p className="text-sm text-on-surface-variant mt-2">{result.score >= 80 ? 'Strong Fit' : result.score >= 60 ? 'Good Fit' : 'Partial Fit'}</p>
@@ -543,6 +578,13 @@ export default function AnalysisPage() {
                                 setLoading(false)
                               }}
                           >Duplicate</button>
+                          {currentId && (
+                            <Link
+                              href={`/analysis/compare?left=${currentId}&right=${h.id}`}
+                              className="px-2 py-1 border border-outline-variant rounded text-[12px] font-bold hover:bg-surface-container-low dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-100"
+                              title="Compare with current"
+                            >Compare</Link>
+                          )}
                         </div>
                       </div>
                     </div>

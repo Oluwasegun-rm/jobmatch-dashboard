@@ -9,9 +9,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response, PlainTextResponse
 from pydantic import BaseModel
 from typing import Any, Dict
+from datetime import datetime
 
 from jobmatch.analyzer import analyze
-from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash
+from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash, update_analysis_name
 from jobmatch.providers import remotive_client
 from jobmatch.providers import usajobs_client
 from jobmatch.providers.models import JobItem
@@ -169,6 +170,7 @@ class SaveRequest(BaseModel):
     score: int
     matched_skills: list[str]
     missing_skills: list[str]
+    name: str | None = None
     job_source: str | None = None
     job_url: str | None = None
     job_title: str | None = None
@@ -192,6 +194,7 @@ def save_endpoint(req: SaveRequest, authorization: str | None = Header(default=N
         score=req.score,
         matched_skills=req.matched_skills,
         missing_skills=req.missing_skills,
+        name=(req.name or None),
         job_source=req.job_source,
         job_url=req.job_url,
         job_title=req.job_title,
@@ -295,15 +298,37 @@ async def jobs_search(
             any_matches = [j for j in jobs if any(tok in _hay(j) for tok in tokens)]
             jobs = any_matches or jobs
 
+    # Stable sort by posted_at desc (fallback to original order when missing)
+    def _parse_dt(v: str | None) -> float:
+        if not v:
+            return 0.0
+        s = str(v).strip()
+        try:
+            # Handle common ISO forms and trailing Z
+            s2 = s.replace("Z", "+00:00")
+            return datetime.fromisoformat(s2).timestamp()
+        except Exception:
+            # As fallback, try a few common formats
+            for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%m/%d/%Y"):
+                try:
+                    return datetime.strptime(s, fmt).timestamp()
+                except Exception:
+                    continue
+        return 0.0
+
+    jobs = sorted(jobs, key=lambda j: _parse_dt(j.posted_at), reverse=True)
+
     total = len(jobs)
     start = (page - 1) * per_page
     end = start + per_page
     results = jobs[start:end] if source == "remotive" else jobs
+    has_more = (total > end) if source == "remotive" else (len(jobs) >= per_page)
     return {
         "ok": True,
         "page": page,
         "per_page": per_page,
         "total": total,
+        "has_more": has_more,
         "results": [
             {
                 "id": j.id,
@@ -469,6 +494,24 @@ def get_analysis(analysis_id: int) -> Dict[str, Any]:
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"ok": True, "result": row}
+
+
+class RenameRequest(BaseModel):
+    name: str | None = None
+
+
+@app.post("/analysis/{analysis_id}/rename")
+def rename_analysis(analysis_id: int, req: RenameRequest) -> Dict[str, Any]:
+    # Basic length guard
+    nm = (req.name or "").strip()
+    if len(nm) > 120:
+        raise HTTPException(status_code=400, detail="name too long")
+    # Ensure analysis exists
+    row = fetch_by_id(analysis_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    update_analysis_name(analysis_id, nm or None)
+    return {"ok": True}
 
 
 # --- Job extraction from URL ---

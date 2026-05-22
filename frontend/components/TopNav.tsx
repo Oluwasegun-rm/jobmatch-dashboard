@@ -133,7 +133,7 @@ export default function TopNav() {
             })}
         </div>
         <div className="flex items-center gap-3">
-          <button className="material-symbols-outlined text-on-surface-variant hover:text-primary dark:text-neutral-200 hover:dark:text-neutral-100">notifications</button>
+          <button aria-label="Notifications" title="Notifications" className="material-symbols-outlined text-on-surface-variant hover:text-primary dark:text-neutral-200 hover:dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md">notifications</button>
           {displayName ? (
             <Link href="/settings" aria-label="Open Settings" className="flex items-center gap-2 group">
               <span className="text-sm font-semibold text-on-surface-variant hidden md:inline group-hover:text-primary dark:text-neutral-100">{displayName}</span>
