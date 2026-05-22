@@ -214,7 +214,7 @@ export default function LandingPage() {
                   <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
                   <div className="h-2 w-full bg-white/20 rounded-full"></div>
                   <div className="p-2 bg-white/10 border-l-4 border-white rounded">
-                    <p className="text-[10px] font-mono text-primary">AI SUGGESTION: Replace "responsible for" with "Spearheaded" and add a metric (+15%).</p>
+                    <p className="text-[10px] font-mono text-on-primary">AI SUGGESTION: Replace "responsible for" with "Spearheaded" and add a metric (+15%).</p>
                   </div>
                 </div>
               </div>
