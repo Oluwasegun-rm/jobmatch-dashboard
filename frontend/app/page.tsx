@@ -41,30 +41,30 @@ function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] bg-white rounded-xl border border-outline-variant shadow-xl">
-        <div className="p-5 border-b border-outline-variant flex items-center justify-between">
-          <h3 className="text-[18px] font-semibold text-primary">{mode === 'login' ? 'Sign in' : 'Create account'}</h3>
-          <button className="material-symbols-outlined text-on-surface-variant hover:text-primary" onClick={onClose}>close</button>
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] bg-white dark:bg-neutral-900 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-xl">
+        <div className="p-5 border-b border-outline-variant dark:border-neutral-800 flex items-center justify-between">
+          <h3 className="text-[18px] font-semibold text-primary dark:text-neutral-100">{mode === 'login' ? 'Sign in' : 'Create account'}</h3>
+          <button className="material-symbols-outlined text-on-surface-variant hover:text-primary dark:text-neutral-300 hover:dark:text-neutral-100" onClick={onClose}>close</button>
         </div>
         <div className="p-5 space-y-4">
           <div>
             <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Username</label>
-            <input value={username} onChange={(e)=>setUsername(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="yourname" />
+            <input value={username} onChange={(e)=>setUsername(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="yourname" />
           </div>
           {mode==='signup' && (
             <div>
               <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Display Name</label>
-              <input value={displayName} onChange={(e)=>setDisplayName(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="What others see" />
+              <input value={displayName} onChange={(e)=>setDisplayName(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="What others see" />
             </div>
           )}
           <div>
             <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Password</label>
-            <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm" placeholder="••••••••" />
+            <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-lg text-sm dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 placeholder:dark:text-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="••••••••" />
           </div>
           {error && <p className="text-error text-sm">{error}</p>}
           <div className="flex items-center justify-between">
-            <button onClick={submit} disabled={loading || !username || !password} className="bg-primary text-on-primary px-5 py-2 rounded-lg font-bold disabled:opacity-50">{loading ? 'Please wait…' : (mode==='login' ? 'Sign in' : 'Create')}</button>
-            <button onClick={()=>setMode(mode==='login'?'signup':'login')} className="text-sm text-on-surface-variant hover:underline">{mode==='login'? 'Create an account' : 'Have an account? Sign in'}</button>
+            <button onClick={submit} disabled={loading || !username || !password} className="bg-primary text-on-primary px-5 py-2 rounded-lg font-bold disabled:opacity-50 dark:hover:opacity-90">{loading ? 'Please wait…' : (mode==='login' ? 'Sign in' : 'Create')}</button>
+            <button onClick={()=>setMode(mode==='login'?'signup':'login')} className="text-sm text-on-surface-variant hover:underline dark:text-neutral-300 hover:dark:text-neutral-100">{mode==='login'? 'Create an account' : 'Have an account? Sign in'}</button>
           </div>
         </div>
       </div>
