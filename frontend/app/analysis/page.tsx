@@ -326,11 +326,11 @@ export default function AnalysisPage() {
                <div className="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
                    <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Resume Text</label>
-                   <textarea value={resume} onChange={(e) => setResume(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950" placeholder="Paste resume content here..." />
+                   <textarea value={resume} onChange={(e) => setResume(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="Paste resume content here..." />
                  </div>
                  <div className="space-y-2">
                    <label className="text-[12px] text-on-surface-variant uppercase font-semibold">Job Description</label>
-                   <textarea value={job} onChange={(e) => setJob(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950" placeholder="Paste job requirements here..." />
+                   <textarea value={job} onChange={(e) => setJob(e.target.value)} className="w-full h-64 p-4 text-sm border border-outline-variant dark:border-neutral-800 rounded-lg resize-none bg-surface-container-lowest dark:bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" placeholder="Paste job requirements here..." />
                  </div>
                </div>
                <div className="p-card-padding bg-surface-container-low dark:bg-neutral-900 border-t border-outline-variant dark:border-neutral-800 flex items-center justify-between">
@@ -394,7 +394,7 @@ export default function AnalysisPage() {
             {result && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Score card */}
-                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center self-start">
+                <div className="md:col-span-1 bg-white dark:bg-neutral-900 p-6 rounded-xl border border-outline-variant dark:border-neutral-800 shadow-sm flex flex-col items-center text-center self-start md:sticky md:top-4">
                   <span className="text-[12px] text-on-surface-variant uppercase mb-2 font-bold">Overall Match</span>
                   <div className="text-5xl font-mono text-primary">{result.score}%</div>
                   <p className="text-sm text-on-surface-variant mt-2">{result.score >= 80 ? 'Strong Fit' : result.score >= 60 ? 'Good Fit' : 'Partial Fit'}</p>
