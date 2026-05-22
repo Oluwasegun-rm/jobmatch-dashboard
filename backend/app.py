@@ -12,7 +12,7 @@ from typing import Any, Dict
 from datetime import datetime
 
 from jobmatch.analyzer import analyze
-from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash
+from jobmatch.storage import save_analysis, fetch_recent, fetch_by_id, init_db, get_user_by_username, create_user, update_display_name, get_user_by_id, update_username, update_password_hash, update_analysis_name
 from jobmatch.providers import remotive_client
 from jobmatch.providers import usajobs_client
 from jobmatch.providers.models import JobItem
@@ -170,6 +170,7 @@ class SaveRequest(BaseModel):
     score: int
     matched_skills: list[str]
     missing_skills: list[str]
+    name: str | None = None
     job_source: str | None = None
     job_url: str | None = None
     job_title: str | None = None
@@ -193,6 +194,7 @@ def save_endpoint(req: SaveRequest, authorization: str | None = Header(default=N
         score=req.score,
         matched_skills=req.matched_skills,
         missing_skills=req.missing_skills,
+        name=(req.name or None),
         job_source=req.job_source,
         job_url=req.job_url,
         job_title=req.job_title,
@@ -492,6 +494,24 @@ def get_analysis(analysis_id: int) -> Dict[str, Any]:
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"ok": True, "result": row}
+
+
+class RenameRequest(BaseModel):
+    name: str | None = None
+
+
+@app.post("/analysis/{analysis_id}/rename")
+def rename_analysis(analysis_id: int, req: RenameRequest) -> Dict[str, Any]:
+    # Basic length guard
+    nm = (req.name or "").strip()
+    if len(nm) > 120:
+        raise HTTPException(status_code=400, detail="name too long")
+    # Ensure analysis exists
+    row = fetch_by_id(analysis_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    update_analysis_name(analysis_id, nm or None)
+    return {"ok": True}
 
 
 # --- Job extraction from URL ---
